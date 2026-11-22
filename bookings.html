@@ -228,7 +228,7 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .pt-grid td.allergy-cell{white-space:normal}
 .pt-grid .p-sub{font-style:normal;color:#23210f}
 .pt-grid td.c-voucher{font-size:.92em}
-.pt-grid .p-who{display:inline-block;margin-left:3px;padding:0 3px;border:.6px solid #b03a2e;border-radius:2px;font-size:.85em;line-height:1.3}
+.pt-grid .p-who{display:inline-block;margin:0 1px;padding:0 3px;border:.6px solid #b03a2e;border-radius:2px;font-size:.85em;line-height:1.3}
 .pt-grid td.c-occwho{color:#23210f}
 /* printed pages made of Statement-size boxes (see renderBoxes) */
 .sheet-page{display:flex;justify-content:center;align-items:flex-start;break-after:page;page-break-after:always;overflow:hidden}
@@ -450,7 +450,7 @@ tr.dragging{background:var(--soft)}
 #resBody tr.first-new td:first-child::after{content:'Added after the last save \00b7  printed sheets keep everything in time order';position:absolute;left:74px;top:15px;white-space:nowrap;font:400 11px var(--sans);color:#5e5829}
 .res-table-edit .r-visits{width:44px;min-width:44px;max-width:44px}
 /* allergy positions (who has it): L, G, P1… */
-.tag .pos{font-weight:500;opacity:.85}
+.tag .pos{font-weight:700;opacity:.9}
 .bp-pos{display:flex;flex-direction:column;gap:6px}
 .bp-prow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .bp-pname{font-size:12px;color:var(--ink);min-width:86px}
@@ -866,6 +866,15 @@ function extractAllergies(notes) {
         var q = notes.match(new RegExp('(\\d+)\\s*x\\s*' + esc + '\\b', 'i'));
         return q ? q[1] + 'x ' + v : v;
     });
+    // "1x gluten" ? "1x Gluten Free": a quantity in front of a known allergy uses its standard name
+    deduped = deduped.map(function(v){
+        var m = v.match(/^(\d+)\s*x\s+(.*)$/i);
+        if (!m) return v;
+        for (var i = 0; i < patterns.length; i++) {
+            if (patterns[i].r.test(m[2]) && m[2].split(/\s+/).length <= 2) return m[1] + 'x ' + patterns[i].l;
+        }
+        return v;
+    });
     // and "1x No beef" / "1x no beef" read the same as the standard label
     deduped = deduped.map(function(v){
         return v.replace(/^(\d+)\s*x\s+(.*)$/i, function(m, n, rest){ return n + 'x ' + rest.replace(/\b\w/g, function(c){ return c.toUpperCase(); }); });
@@ -960,6 +969,13 @@ function extractOccasion(notes) {
     // GUEST REQUESTS: "40th birthday present for my husband")
     if (occ.length === 0) {
         var scan = [
+            {r:/\bpromot(?:ion|ed)\b/i, l:'Promotion'},
+            {r:/\bretire(?:ment|d)?\b/i, l:'Retirement'},
+            {r:/\breunion\b/i, l:'Reunion'},
+            {r:/\bfarewell\b/i, l:'Farewell'},
+            {r:/\bchristening\b/i, l:'Christening'},
+            {r:/\bhen\s*(?:do|party|night)\b/i, l:'Hen Party'},
+            {r:/\bstag\s*(?:do|party|night)\b/i, l:'Stag Party'},
             {r:/\bbirthday\b/i, l:'Birthday'},
             {r:/\banniversary\b/i, l:'Anniversary'},
             {r:/\bengagement\b/i, l:'Engagement'},
@@ -984,7 +1000,7 @@ function extractOccasionType(notes) {
     var full = extractOccasion(notes);
     if (!full) return '';
     // Known types
-    var types = ['Birthday','Anniversary','Engagement','Promotion','Graduation','Retirement','Honeymoon','Wedding','Proposal','Reunion','Farewell','Hen Party','Stag Party','Welcome','Baby Shower','Celebration','Congratulations','Special Occasion'];
+    var types = ['Birthday','Anniversary','Engagement','Promotion','Graduation','Retirement','Honeymoon','Wedding','Proposal','Reunion','Farewell','Hen Party','Stag Party','Welcome','Baby Shower','Christening','Celebration','Congratulations','Special Occasion'];
     var found = [];
     for (var i=0; i<types.length; i++) {
         if (full.toLowerCase().indexOf(types[i].toLowerCase()) >= 0) found.push(types[i]);
@@ -1120,7 +1136,41 @@ function extractNotes(notes) {
     var hasAllergy = !!extractAllergies(notes);
     var hasOccasion = !!extractOccasion(notes);
 
+    // an occasion said in the requests goes to the Occasion column, not the notes
+    raw = occasionFromNote(raw).rest;
     return cleanNotes(raw, hasVoucher, hasAllergy, hasOccasion);
+}
+
+// An occasion written in the notes ("Celebrating promotion", "It's her 40th birthday", "Anniversary dinner").
+// Returns { type, rest }: the occasion type, and the notes without the phrases that only said that.
+// A phrase that also asks for something ("birthday cake please") stays in the notes.
+var NOTE_OCCASIONS = [
+    [/\bpromot(?:ion|ed)\b/i, 'Promotion'], [/\bretire(?:ment|d)?\b/i, 'Retirement'], [/\bengage(?:ment|d)\b/i, 'Engagement'],
+    [/\bgraduat(?:ion|ed|ing)\b/i, 'Graduation'], [/\bhoneymoon\b/i, 'Honeymoon'], [/\bproposal\b|\bpropos(?:e|ing)\b/i, 'Proposal'],
+    [/\breunion\b/i, 'Reunion'], [/\bfarewell\b|\bleaving\s+(?:do|party|dinner)\b/i, 'Farewell'], [/\bchristening\b/i, 'Christening'],
+    [/\bbaby\s*shower\b/i, 'Baby Shower'], [/\bhen\s*(?:do|party|night)\b/i, 'Hen Party'], [/\bstag\s*(?:do|party|night)\b/i, 'Stag Party'],
+    [/\banniversary\b/i, 'Anniversary'], [/\bbirthday\b|\bbday\b/i, 'Birthday'], [/\bwedding\b/i, 'Wedding'],
+    [/\bcongrat\w*/i, 'Congratulations'], [/\bcelebrat\w*/i, 'Celebration']
+];
+function occasionFromNote(text) {
+    var s = String(text || ''), type = '';
+    var frags = s.split(/(?:[.;!]\s*|\n)/);
+    var kept = frags.filter(function(f) {
+        var x = f.trim();
+        if (!x) return false;
+        var hit = '';
+        for (var i = 0; i < NOTE_OCCASIONS.length; i++) if (NOTE_OCCASIONS[i][0].test(x)) { hit = NOTE_OCCASIONS[i][1]; break; }
+        if (!hit) return true;
+        if (!type) type = hit;
+        // only the occasion said, nothing else asked for → leave it out of the notes
+        var bare = x.toLowerCase()
+            .replace(/\b(?:celebrat\w*|to celebrate|in celebration of|for|of|on|it'?s|it is|is|are|we are|they are|a|an|the|our|my|his|her|their|first|1st|special|occasion|very|day|dinner|meal|lunch|party|celebration|guest'?s?|wife'?s?|husband'?s?|partner'?s?|son'?s?|daughter'?s?|mum'?s?|mother'?s?|dad'?s?|father'?s?|friend'?s?|congrat\w*|happy|surprise|and|&|to|at|petrus|\d+(?:st|nd|rd|th)?)\b/g, ' ')
+            .replace(/\b[a-z]+'s\b/g, ' ');
+        NOTE_OCCASIONS.forEach(function(o){ bare = bare.replace(new RegExp(o[0].source, 'gi'), ' '); });
+        bare = bare.replace(/[^a-z]+/g, ' ').trim();
+        return bare.length > 0 && !/^[a-z]{1,2}$/.test(bare) && bare.split(' ').length >= 1 && bare.length > 3;
+    });
+    return { type: type, rest: kept.map(function(f){ return f.trim(); }).join('. ').replace(/\.\s*\./g, '.').trim() };
 }
 
 // Remove sentences/phrases from the free-text notes that duplicate data
@@ -1734,7 +1784,7 @@ var PCOL = {
     time:    { h: 'Time',      f: function(r, info){ return formatTimePrint(r.time, info.service); }, cls: 'c-time' },
     pax:     { h: 'Pax',       f: function(r){ return esc(String(r.pax || '')); } },
     star:    { h: '\u2605',    f: function(r){ return r.star ? '\u2605' : ''; }, cls: 'c-star' },
-    name:    { h: 'Name',      f: function(r){ return '<strong>' + esc(r.name) + '</strong>'; } },
+    name:    { h: 'Name',      f: function(r){ return '<strong>' + (r.star ? '\u2605 ' : '') + esc(r.name) + '</strong>'; } },   // star only when marked
     table:   { h: 'Tbl',       f: function(r){ return esc(r.table); } },
     sec:     { h: 'Sec',       f: function(r){ return esc(printSec(r)); } },
     menu:    { h: 'Menu',      f: function(r){ return esc(r.menu); } },
@@ -1755,7 +1805,7 @@ var PCOL = {
                }, cls: 'c-visits' },
     notes:   { h: 'Notes',     f: function(r){ return esc(r.notes); }, cls: 'notes-cell' },
     allergyPlain: { h: 'Allergies', f: function(r){ return allergyPrintHTML({ allergy: r.allergy }); }, td: function(r){ return r.allergy ? 'allergy-cell' : ''; } },
-    cloak:   { h: 'Cloak',     f: function(){ return ''; }, cls: 'c-cloak' }      // written by hand at reception
+    cloak:   { h: 'Cloak',     f: function(){ return ''; }, cls: 'c-cloak' }      // Reception only, left of the name: written by hand
 };
 // Allergies for the sheet, one per line, with who has it (L / G) when it was picked on screen.
 function allergyPrintHTML(r) {
@@ -1772,9 +1822,10 @@ function allergyPrintHTML(r) {
     }
     if (cur.trim()) toks.push(cur.trim());
     return toks.map(function(tk) {
-        var key = tk.replace(/^\d+\s*x\s+/i, '').trim().toLowerCase();
+        var qm = tk.match(/^(\d+)\s*x\s+/i), label = tk.replace(/^\d+\s*x\s+/i, '').trim(), key = label.toLowerCase();
         var who = (map[key] || []).filter(function(x){ return x === 'L' || x === 'G'; });
-        return esc(tk) + (who.length ? ' <span class="p-who">' + who.join(' ') + '</span>' : '');
+        // quantity, then who, then the allergy last: "1x L Gluten Free"
+        return (qm ? qm[1] + 'x ' : '') + (who.length ? '<span class="p-who">' + who.join(' ') + '</span> ' : '') + esc(label);
     }).join('<br>');
 }
 function printSec(r) {
@@ -1812,15 +1863,15 @@ function buildSheetHTML(label, info, rows, keys, widths, covers, tables, extraCl
 // Kitchen: Time, Pax, ★, Name, Table, Menu, Allergies
 // Kitchen: Time, Pax, ★, Name, Table, Menu, Allergies
 function buildKitchenHTML(info, rows, first, last) {
-    return buildSheetHTML('KITCHEN' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','star','name','table','menu','allergyPlain'],
-        [10, 6, 4, 32, 7, 17, 24], info.covers, info.tables, '', last === false ? 0 : 3);
+    return buildSheetHTML('KITCHEN' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','name','table','menu','allergyPlain'],
+        [10, 6, 34, 8, 17, 25], info.covers, info.tables, '', last === false ? 0 : 3);
 }
 
 // Pastry: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion
 // Pastry: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion (+ who it is for)
 function buildPastryHTML(info, rows, first, last) {
-    return buildSheetHTML('PASTRY' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','star','name','table','menu','allergyPlain','occasion'],
-        [9, 5, 4, 26, 6, 13, 19, 18], info.covers, info.tables, '', last === false ? 0 : 3);
+    return buildSheetHTML('PASTRY' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','name','table','menu','allergyPlain','occasion'],
+        [9, 5, 28, 6, 13, 20, 19], info.covers, info.tables, '', last === false ? 0 : 3);
 }
 
 function buildReceptionLHTML(info, rows) {
@@ -1851,8 +1902,8 @@ function buildSalonHTML(info, filtered, sectionLabel, allowedTables, first, last
     var all = allRows || filtered, sectionCovers = 0;
     all.forEach(function(r){ sectionCovers += parseInt(r.pax) || 0; });
     return buildSheetHTML(sectionLabel + (first === false ? ' (cont.)' : ''), info, filtered,
-        ['time','pax','star','name','table','menu','allergy','occasion','occwho','voucher','visits','notes'],
-        [7, 4, 3, 14, 4, 9, 11, 9, 8, 12, 5, 14], sectionCovers, all.length, '', last === false ? 0 : 3);
+        ['time','pax','name','table','menu','allergy','occasion','occwho','voucher','visits','notes'],
+        [7, 4, 16, 4, 9, 11, 9, 8, 12, 5, 15], sectionCovers, all.length, '', last === false ? 0 : 3);
 }
 
 // === PRINT BOH (Kitchen x2 + Pastry) ===
@@ -2205,8 +2256,8 @@ function buildKTStationHTML(info, ktRows) {
 // Reception: Time, Pax, ★, Name, Table, Sec, Menu, Occasion (+ who), Voucher, Visits, Notes
 function buildReceptionHTML(info, rows, first, last) {
     return buildSheetHTML('RECEPTION' + (first === false ? ' (cont.)' : ''), info, rows,
-        ['time','pax','star','name','table','cloak','sec','menu','occasion','occwho','voucher','visits','notes'],
-        [7, 4, 3, 14, 4, 5, 4, 9, 9, 8, 13, 5, 15], info.covers, info.tables, 'reception-table', last === false ? 0 : 3);
+        ['time','pax','cloak','name','table','sec','menu','occasion','occwho','voucher','visits','notes'],
+        [7, 4, 5, 15, 4, 4, 9, 9, 8, 13, 5, 17], info.covers, info.tables, 'reception-table', last === false ? 0 : 3);
 }
 
 // === SAVE / LOAD BOOKINGS (Firestore) ===
@@ -2439,6 +2490,15 @@ document.getElementById('resBody').addEventListener('input', function(e) {
 // already labelled £, and this prevents a stored "£118" from doubling up.
 document.getElementById('resBody').addEventListener('blur', function(e) {
     if (e.target && e.target.matches('.r-visits')) { e.target.value = normVisits(e.target.value); }
+    if (e.target && e.target.matches('.r-notes')) {
+        var oc = occasionFromNote(e.target.value), occEl = e.target.closest('tr').querySelector('.r-occasion');
+        if (oc.type && occEl && (!occEl.value.trim() || occEl.value.trim().toLowerCase() === oc.type.toLowerCase())) {
+            occEl.value = oc.type;
+            occEl.dispatchEvent(new Event('input', { bubbles: true }));
+            occEl.dispatchEvent(new Event('change', { bubbles: true }));
+            if (oc.rest !== e.target.value) { e.target.value = oc.rest; e.target.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+    }
     if (e.target && e.target.matches('.r-vvalue')) {
         e.target.value = e.target.value.replace(/^[£€\s]+/, '').trim();
     }
@@ -2555,7 +2615,8 @@ addRow = function() {
         var pm = readPos(tr);
         tk.slice(0, 2).forEach(function(t){
           var k = kindOf(t), ps = pm[core(t)] || [];
-          html += '<span class="tag' + (k === 'a' ? ' al' : (k === 'd' ? '' : ' oth')) + '">' + h(t) + (ps.length ? ' <span class="pos">&middot; ' + h(ps.join(' ')) + '</span>' : '') + '</span>';
+          var qm = String(t).match(/^(\d+)\s*x\s+/i), lab = String(t).replace(/^\d+\s*x\s+/i, '');
+          html += '<span class="tag' + (k === 'a' ? ' al' : (k === 'd' ? '' : ' oth')) + '">' + (qm ? h(qm[1]) + 'x ' : '') + (ps.length ? '<span class="pos">' + h(ps.join(' ')) + '</span> ' : '') + h(lab) + '</span>';
         });
         if (tk.length > 2) html += tag('+' + (tk.length - 2), 'more');
       }
@@ -2613,9 +2674,9 @@ addRow = function() {
         on.forEach(function(p){ if (all.indexOf(p) < 0) all.push(p); });   // keep a seat picked before the pax changed
         var qm = String(t).match(/^(\d+)\s*x\s+/i), qty = qm ? qm[1] : '', label = String(t).replace(/^\d+\s*x\s+/i, '');
         return '<div class="bp-prow"><input type="number" class="bp-qty" min="1" max="99" inputmode="numeric" placeholder="#" title="How many guests" value="' + qty + '" data-key="' + h(key) + '">' +
-          '<span class="bp-pname' + (kindOf(t) === 'a' ? ' al' : '') + '">' + h(label) + '</span><span class="bp-pchips">' +
+          '<span class="bp-pchips">' +
           all.map(function(p){ return '<button type="button" class="bp-pc' + (on.indexOf(p) >= 0 ? ' on' : '') + '" data-key="' + h(key) + '" data-pos="' + p + '">' + p + '</button>'; }).join('') +
-          '</span></div>';
+          '</span><span class="bp-pname' + (kindOf(t) === 'a' ? ' al' : '') + '">' + h(label) + '</span></div>';
       }).join('');
     }
     function sync(){
@@ -2629,7 +2690,7 @@ addRow = function() {
       '<div class="bp-grp">Allergies</div><div class="bp-grid">' + ALLERGENS.map(box).join('') + '</div>' +
       '<div class="bp-grp">Diet</div><div class="bp-grid">' + DIETS.map(box).join('') + '</div>' +
       '<div class="bp-grp">Other</div><input type="text" class="bp-other" placeholder="Type anything else&hellip;" value="' + h(tokens.filter(function(t){ return !kindOf(t); }).join(', ')) + '">' +
-      '<div class="bp-grp">How many &middot; who <span style="text-transform:none;letter-spacing:0;font-weight:400">(L lady, G gentleman)</span></div><div class="bp-pos"></div>' +
+      '<div class="bp-grp">How many &middot; who &middot; allergy <span style="text-transform:none;letter-spacing:0;font-weight:400">(L lady, G gentleman)</span></div><div class="bp-pos"></div>' +
       '<div class="bp-act"><button type="button" class="bp-btn" data-act="clear">Clear</button><button type="button" class="bp-btn pr" data-act="done">Done</button></div>';
     el.addEventListener('change', function(e){
       var c = e.target;
