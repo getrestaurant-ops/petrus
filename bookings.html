@@ -240,18 +240,47 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .bx-cell,.triple-cell.bx-cell{height:auto !important;border:none !important;overflow:visible !important;page-break-before:auto !important;break-before:auto !important}
 .bx .bx-cell + .bx-cell{border-top:.6px dashed #bbb !important}
 .bx .station-page{page-break-after:auto;break-after:auto;padding:0;margin:0}
-/* station sheet (canapés / water / wine): thin olive column lines, dark row lines, room to mark by hand */
-.st-grid{width:100%;border-collapse:collapse;table-layout:fixed;font-family:var(--sans);font-size:6.5pt;color:#23210f}
-.st-grid th,.st-grid td{border-bottom:1px solid #3a3826;border-right:.5px solid #b8b49a;padding:2px 3px;text-align:center;vertical-align:middle;height:19px}
+/* station sheets: Section 1 | Section 2 side by side on one landscape Statement page (cut down the middle) */
+/* station page: portrait Statement (named page), two halves = Section 1 / Section 2 */
+.st-page{page:stations;break-before:page;page-break-before:always;margin:0}
+.st-page.on-letter{page:auto}
+.st-half2{box-sizing:border-box;overflow:hidden;padding:6px 2px 0}
+.st-half2 + .st-half2{border-top:.6px dashed #aaa}
+.st-grid th.st-wh{text-align:center;border-bottom:.5px solid #b8b49a}
+.st-grid th.st-sub{font-size:4.2pt;text-align:center}
+.st-grid td.st-w{background:none}
+.st-line{display:flex;align-items:flex-end;gap:3px;font-size:5.4pt;font-weight:600;letter-spacing:.4px}
+.st-line b{display:inline-block;flex:1;min-width:24px;border-bottom:.6px solid #8f8b6a;height:9px}
+.st-pair{display:flex;width:100%}
+.st-half{flex:0 0 50%;box-sizing:border-box;padding:0 10px;min-width:0}
+.st-half:first-child{padding-left:0;border-right:.6px dashed #aaa}
+.st-half:last-child{padding-right:0}
+.st-half .ph{gap:6px}
+.st-half .ph .p-logo{height:13px}
+.st-half .pt-a{font-size:12pt}.st-half .pt-b{font-size:10pt}
+.st-half .fd{font-size:5pt}.st-half .fg b{font-size:9pt}.st-half .fg i{font-size:3.6pt;letter-spacing:1px}.st-half .pf{gap:7px}
+.st-key{font-size:4.3pt;letter-spacing:.5px;text-transform:uppercase;color:#5e5829;margin:0 0 4px}
+.st-grid{width:100%;border-collapse:collapse;table-layout:fixed;font-family:var(--sans);color:#23210f}
+.st-grid th{font-size:4.4pt;font-weight:600;letter-spacing:.9px;text-transform:uppercase;text-align:left;color:#23210f;border-bottom:1.3px solid #23210f;padding:2px 3px}
+.st-grid td{border-bottom:1px solid #3a3826;border-right:.5px solid #b8b49a;padding:3px 3px;height:30px;vertical-align:middle}
 .st-grid td:last-child{border-right:none}
-.st-grid tr.st-head th,.st-grid tr.st-head td{border-top:1.5px solid #23210f;border-bottom:1.5px solid #23210f;height:24px}
-.st-grid tr.st-top th,.st-grid tr.st-top td{border-top:1.5px solid #23210f}
-.st-grid .st-lab{text-align:left;font-size:5.2pt;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:#5e5829}
-.st-grid .st-opt{text-align:left;font-size:5pt;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#5e5829}
-.st-grid .st-tbl{font-family:var(--serif);font-size:13pt;font-weight:500;color:#23210f;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
-.st-grid .st-pax{font-size:7pt;color:#23210f}
-.st-grid td.st-blank{background:none}
-.station-sheet .ph{margin-bottom:8px}
+.st-grid .st-tbl{font-family:var(--serif);font-size:13pt;line-height:1;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+.st-grid .st-pax{font-size:7pt}
+.st-seats{display:flex;flex-wrap:wrap;gap:3px}
+.st-sw{display:inline-flex;flex-direction:column;align-items:center;gap:1.5px}
+.st-sw i{font-style:normal;font-size:3.6pt;line-height:1;color:#5e5829;font-weight:600;letter-spacing:.2px}
+.st-seat{width:15px;height:15px;border:.45px solid #3a3826;border-radius:50%;box-sizing:border-box}
+.st-title{font-family:var(--serif);font-size:13pt;line-height:1.1;color:#23210f;padding-bottom:3px;margin-bottom:4px;border-bottom:1px solid #23210f;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+.st-can{display:flex;flex-direction:column;gap:3px;font-size:4.6pt;font-weight:600;letter-spacing:.6px;text-transform:uppercase}
+.st-can span{display:flex;align-items:center;gap:3px}
+.st-bx{display:inline-block;width:6px;height:6px;border:.7px solid #23210f;border-radius:1px}
+.st-yn{font-size:6.5pt;font-weight:600;display:flex;gap:12px;padding-left:3px}
+.st-yn i{display:none}
+.st-wine{display:flex;flex-wrap:wrap;gap:2px}
+.st-wine{gap:3px !important}
+.st-wine span{border:.6px solid #b8b49a;border-radius:6px;padding:1px 4px;font-size:5.2pt;font-weight:600;letter-spacing:.4px;white-space:nowrap}
+.st-grid tr.st-walk td{height:28px}
+.station-sheet .ph{margin-bottom:4px}
 .print-table tr:nth-child(even){background:none}
 .print-table td.allergy-cell,.triple-cell .print-table td.allergy-cell{background:none;color:#b03a2e;font-weight:700}
 .print-table td.occasion-cell,.triple-cell .print-table td.occasion-cell{background:#fbe4ea;color:#23210f;font-style:normal;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -1699,7 +1728,8 @@ function setPageStyle(dims, margin) {
     if (existing) existing.remove();
     var style = document.createElement('style');
     style.id = 'printOrientationStyle';
-    style.textContent = '@page{size:' + dims + ';margin:' + (margin || '2mm') + '}';
+    style.textContent = '@page{size:' + dims + ';margin:' + (margin || '2mm') + '}' +
+        '@page stations{size:5.5in 8.5in;margin:2mm}';     // station sheets: portrait Statement, Section 1 on top, Section 2 below
     document.head.appendChild(style);
 }
 
@@ -1946,8 +1976,9 @@ function printFOH(paper) {
     var blocks = tagBlocks(sheetBlocks(function(part, first, last){ return buildSalonHTML(info, part, 'SECTION 1', SECTION_1_TABLES, first, last, s1Rows); }, s1Rows, 'landscape', 0.88), 's');
     if (s2Rows.length > 0) blocks = blocks.concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildSalonHTML(info, part, 'SECTION 2', SECTION_2_TABLES, first, last, s2Rows); }, s2Rows, 'landscape', 0.88), 's'));
     blocks = blocks.concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildReceptionHTML(info, part, first, last); }, rows, 'landscape', 0.7), 'r'));
-    buildAllStationPages(info, rows).forEach(function(html, i){ blocks.push(fitWholeBlock(html, 'landscape', 'st' + i)); });
     renderBoxes(packBoxes(blocks, 'landscape'), 'landscape', paper);
+    var st = buildAllStationPages(info, rows, paper);
+    if (st) document.querySelector('#printAreaTriple .print-triple-page').insertAdjacentHTML('beforeend', st);
     setTimeout(function(){ window.print(); }, 300);
 }
 
@@ -2124,13 +2155,22 @@ function printStationSheet(paper) {
 }
 
 // Build every station page that applies for the day's bookings.
-function buildAllStationPages(info, rows) {
-    // One sheet per section (Section 1, Section 2). Kitchen Table is not printed.
-    var pages = [];
+// Station sheets: half a portrait Statement sheet per section (Section 1 on top, Section 2 below).
+// Returns the page HTML, or '' when no section has bookings. Kitchen Table is not printed.
+var STATION_WATER = 'cols';          // 'seats' = a circle per guest (P1, P2…) · 'cols' = Still / Spark / Tap columns · 'line' = S __ SP __ T __
+function buildAllStationPages(info, rows, paper) {
     var s1 = filterBySection(rows, 1), s2 = filterBySection(rows, 2);
-    if (s1.length > 0) pages.push(buildStationHTML(info, s1, 'SECTION 1'));
-    if (s2.length > 0) pages.push(buildStationHTML(info, s2, 'SECTION 2'));
-    return pages;
+    if (!s1.length && !s2.length) return '';
+    var W = 5.5 * 96 - 4 * 3.7795, H = (8.5 * 96 - 4 * 3.7795) / 2;
+    function half(html) {
+        if (!html) return '<div class="st-half2" style="height:' + H.toFixed(1) + 'px"></div>';
+        var h = measureSheet(html, W), z = h > H - 4 ? (H - 4) / h : 1;
+        return '<div class="st-half2" style="height:' + H.toFixed(1) + 'px"><div style="zoom:' + z.toFixed(3) + '">' + html + '</div></div>';
+    }
+    var letter = paper === 'letter' || paper === 'a4';
+    return '<div class="st-page' + (letter ? ' on-letter' : '') + '" style="width:' + W.toFixed(1) + 'px">' +
+        half(s1.length ? buildStationHTML(info, s1, 'SECTION 1') : '') +
+        half(s2.length ? buildStationHTML(info, s2, 'SECTION 2') : '') + '</div>';
 }
 
 // Shared row builders for a station grid given a set of columns.
@@ -2206,40 +2246,48 @@ function stationPage(blocksHTML) {
 // Standard section station sheet (S1 / S2)
 // Station sheet for a section: one column per booking (time order) + 4 blank walk-in columns.
 // Rows: Table, Pax, Aperitif, Canapés, Water (Still / Spark / Tap), Wine (BTG / BTB / Pair / NA / No).
+// One section's station sheet, one row per booking in table-number order:
+// Tbl · Pax · Water (one circle per guest, seat 1 as on the floor then clockwise) · Canapés called / done · Aperitif Y N · Wine.
+// A few empty rows at the end for walk-ins.
 function buildStationHTML(info, sectionRows, sectionLabel) {
-    var BLANK_WALKINS = 4;
+    var WALKINS = 3;
     var list = sectionRows.filter(function(r){ return (r.table || '').trim(); });
     list.sort(function(a, b) {
-        var ta = timeToMinutes(formatTimePrint(a.time, info.service)), tb = timeToMinutes(formatTimePrint(b.time, info.service));
-        return (ta - tb) || ((parseInt(a.table) || 0) - (parseInt(b.table) || 0));
+        return ((parseInt(a.table) || 999) - (parseInt(b.table) || 999)) ||
+               (timeToMinutes(formatTimePrint(a.time, info.service)) - timeToMinutes(formatTimePrint(b.time, info.service)));
     });
-    var cols = list.map(function(r){ return { table: (r.table || '').trim(), pax: parseInt(r.pax) || '' }; });
-    for (var b = 0; b < BLANK_WALKINS; b++) cols.push(null);
     var covers = 0;
     list.forEach(function(r){ covers += parseInt(r.pax) || 0; });
-
-    var labelW = 16, dataW = (100 - labelW) / cols.length;
-    var cg = '<colgroup><col style="width:' + (labelW * 0.55) + '%"><col style="width:' + (labelW * 0.45) + '%">' +
-             cols.map(function(){ return '<col style="width:' + dataW.toFixed(3) + '%">'; }).join('') + '</colgroup>';
-    function cells(fn, cls) { return cols.map(function(c){ return '<td class="' + (cls || '') + (c ? '' : ' st-blank') + '">' + (c ? fn(c) : '') + '</td>'; }).join(''); }
-    function single(label, cls, fn, rowCls) {
-        return '<tr class="' + (rowCls || '') + '"><th class="st-lab" colspan="2">' + label + '</th>' + cells(fn || function(){ return ''; }, cls) + '</tr>';
+    function seats(n) {
+        var s = '<span class="st-seats">';
+        for (var i = 1; i <= n; i++) s += '<span class="st-sw"><i>P' + i + '</i><span class="st-seat"></span></span>';
+        return s + '</span>';
     }
-    function group(label, opts) {
-        return opts.map(function(o, i) {
-            return '<tr class="' + (i === 0 ? 'st-top' : '') + '">' + (i === 0 ? '<th class="st-lab" rowspan="' + opts.length + '">' + label + '</th>' : '') +
-                   '<th class="st-opt">' + o + '</th>' + cells(function(){ return ''; }, 'st-mark') + '</tr>';
-        }).join('');
+    var wine = '<span class="st-wine"><span>GL</span><span>BT</span><span>PAIR</span><span>NO</span></span>';
+    var canap = '';
+    var yn = '<span class="st-yn"><span>Y</span><span>N</span></span>';
+    var mode = STATION_WATER;
+    function water(pax) {
+        if (mode === 'cols') return '<td class="st-w"></td><td class="st-w"></td><td class="st-w"></td>';
+        if (mode === 'line') return '<td><span class="st-line"><span>S</span><b></b><span>SP</span><b></b><span>T</span><b></b></span></td>';
+        return '<td>' + (pax ? seats(pax) : '') + '</td>';
     }
-    var body = single('Table', 'st-tbl', function(c){ return esc(c.table); }, 'st-head') +
-               single('Pax', 'st-pax', function(c){ return esc(String(c.pax)); }) +
-               single('Aperitif', 'st-mark', null, 'st-top') +
-               single('Canap\u00e9s', 'st-mark', null, 'st-top') +
-               group('Water', ['Still', 'Spark', 'Tap']) +
-               group('Wine', ['BTG', 'BTB', 'Pair', 'NA', 'No']);
-    var label = sectionLabel.replace(/^SECTION/, 'STATIONS \u00b7 SECTION');
-    return '<div class="station-sheet">' + printHead(label, info.service, info.dateStr, covers, list.length) +
-           '<table class="st-grid">' + cg + '<tbody>' + body + '</tbody></table></div>';
+    var body = list.map(function(r) {
+        var pax = Math.max(1, Math.min(parseInt(r.pax) || 1, 20));
+        return '<tr><td class="st-tbl">' + esc(r.table) + '</td>' + water(pax) +
+               '<td>' + yn + '</td><td>' + canap + '</td><td>' + wine + '</td></tr>';
+    }).join('');
+    for (var w = 0; w < WALKINS; w++) body += '<tr class="st-walk"><td></td>' + water(0) + '<td>' + yn + '</td><td>' + canap + '</td><td>' + wine + '</td></tr>';
+    var sec = sectionLabel.toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+    var svc = String(info.service || '').toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+    return '<div class="station-sheet"><div class="st-title">' + esc(sec) + (svc ? ' &ndash; ' + esc(svc) : '') + '</div>' +
+        '<table class="st-grid">' + (mode === 'cols'
+          ? '<colgroup><col style="width:8%"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:12%"><col style="width:9%"><col style="width:23%"></colgroup>' +
+            '<thead><tr><th rowspan="2">Tbl</th><th colspan="3" class="st-wh">Water &middot; positions</th><th rowspan="2">Aperitif</th><th rowspan="2">Canap\u00e9s</th><th rowspan="2">Wine</th></tr>' +
+            '<tr><th class="st-sub">Still</th><th class="st-sub">Spark</th><th class="st-sub">Tap</th></tr></thead>'
+          : '<colgroup><col style="width:8%"><col style="width:45%"><col style="width:13%"><col style="width:9%"><col style="width:25%"></colgroup>' +
+            '<thead><tr><th>Tbl</th><th>Water' + (mode === 'line' ? '' : ' &middot; by seat') + '</th><th>Aperitif</th><th>Canap\u00e9s</th><th>Wine</th></tr></thead>') +
+        '<tbody>' + body + '</tbody></table></div>';
 }
 
 // Kitchen Table station sheet: columns are seats P1..P[pax], no Canapés row.
