@@ -188,7 +188,7 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .triple-cell .print-table th{padding:2px 3px;font-size:5.5pt;text-align:left;white-space:nowrap;background:none;color:#333;font-weight:700;border-bottom:1.5px solid #333;text-transform:uppercase}
 .triple-cell .print-table td{padding:2px 3px;font-size:6.5pt;text-align:left;border-bottom:1px solid #999;height:28px;vertical-align:top}
 /* Reception table: pack tightly so all reservations fit on one page */
-.triple-cell .reception-table td{height:auto;padding:1px 3px;line-height:1.15}
+.triple-cell .reception-table td{height:auto;padding:5px 3px;line-height:1.3}
 .triple-cell .menu-summary{font-size:6pt;padding:2px 5px;margin-top:4px}
 .triple-cell .menu-summary span{margin-right:10px}
 .triple-cell .allergy-summary{font-size:6pt;padding:2px 5px;margin-top:3px}
@@ -205,17 +205,41 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .pf{display:flex;align-items:flex-end;gap:14px}
 .fd{font-size:7pt;color:#5e5829;letter-spacing:.5px;margin-bottom:2px;white-space:nowrap}
 .fg{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-.fg b{font-family:var(--serif);font-size:16pt;font-weight:500;color:#23210f;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
-.fg i{font-style:normal;font-size:5pt;letter-spacing:2px;text-transform:uppercase;color:#5e5829;margin-top:2px}
+.fg b{font-family:var(--serif);font-size:10.5pt;font-weight:500;color:#23210f;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+.fg i{font-style:normal;font-size:4.2pt;letter-spacing:1.5px;text-transform:uppercase;color:#5e5829;margin-top:1px}
 .quad-cell .ph{gap:8px;margin-bottom:4px;padding-bottom:3px}
 .quad-cell .ph .p-logo{height:13px}
 .quad-cell .pt-a{font-size:11pt}.quad-cell .pt-b{font-size:9pt}
 .quad-cell .fd{font-size:5pt}.quad-cell .fg b{font-size:10pt}.quad-cell .fg i{font-size:3.8pt;letter-spacing:1.2px}.quad-cell .pf{gap:8px}
 .triple-cell .ph .p-logo{height:18px}
-.triple-cell .pt-a{font-size:16pt}.triple-cell .pt-b{font-size:13pt}.triple-cell .fg b{font-size:13pt}
+.triple-cell .pt-a{font-size:16pt}.triple-cell .pt-b{font-size:13pt}.triple-cell .fg b{font-size:10pt}
 .print-table th,.triple-cell .print-table th{background:none;color:#5e5829;border-right:none;border-bottom:1px solid #d3cfa6;font-weight:600;letter-spacing:1.2px;font-size:5pt;padding:3px}
 .quad-cell .print-table th{font-size:4.2pt;letter-spacing:.8px}
-.print-table td,.triple-cell .print-table td{border-right:none;border-bottom:1px solid #e7e4cf;color:#23210f}
+.print-table td,.triple-cell .print-table td{border-right:.5px solid #b8b49a;border-bottom:1px solid #3a3826;color:#23210f}
+.print-table td:last-child,.triple-cell .print-table td:last-child{border-right:none}
+.print-table thead th,.triple-cell .print-table thead th{border-bottom:1.5px solid #23210f;color:#23210f}
+/* fixed columns (widths per sheet in buildSheetHTML); text wraps inside its column */
+.pt-grid{table-layout:fixed}
+.pt-grid td{white-space:normal;overflow-wrap:anywhere}
+.pt-grid td.c-time,.pt-grid th{white-space:nowrap}
+.pt-grid th{overflow:hidden;text-overflow:clip}
+.pt-grid .c-star{text-align:center;padding-left:0;padding-right:0}
+.pt-grid td.c-star{color:#9d9650}
+.pt-grid td.allergy-cell{white-space:normal}
+.pt-grid .p-sub{font-style:normal;color:#23210f}
+.pt-grid td.c-voucher{font-size:.92em}
+.pt-grid .p-who{display:inline-block;margin-left:3px;padding:0 3px;border:.6px solid #b03a2e;border-radius:2px;font-size:.85em;line-height:1.3}
+.pt-grid td.c-occwho{color:#23210f}
+/* printed pages made of Statement-size boxes (see renderBoxes) */
+.sheet-page{display:flex;justify-content:center;align-items:flex-start;break-after:page;page-break-after:always;overflow:hidden}
+.sheet-page:last-child{break-after:auto;page-break-after:auto}
+.sheet-page.two-down{flex-direction:column;align-items:center}
+.bx{box-sizing:border-box;overflow:hidden;flex:0 0 auto}
+.sheet-page.two-across .bx + .bx{border-left:.6px dashed #aaa}
+.sheet-page.two-down .bx + .bx{border-top:.6px dashed #aaa}
+.bx-cell,.triple-cell.bx-cell{height:auto !important;border:none !important;overflow:visible !important;page-break-before:auto !important;break-before:auto !important}
+.bx .bx-cell + .bx-cell{border-top:.6px dashed #bbb !important}
+.bx .station-page{page-break-after:auto;break-after:auto;padding:0;margin:0}
 .print-table tr:nth-child(even){background:none}
 .print-table td.allergy-cell,.triple-cell .print-table td.allergy-cell{background:none;color:#b03a2e;font-weight:700}
 .print-table td.occasion-cell,.triple-cell .print-table td.occasion-cell{background:none;color:#5e5829;font-style:italic}
@@ -266,6 +290,8 @@ tr.drag-over td{border-top:2px solid var(--gold)}
     .triple-cell:last-child{border-bottom:none}
     .triple-cell.page-break{page-break-before:always;border-bottom:none}
     .station-page{margin:0}
+    /* the page wrapper's screen padding must not shift the printed sheets */
+    .page{padding:0 !important;margin:0 !important;max-width:none !important}
     /* @page size/margin is set dynamically per print target via #printOrientationStyle */
 }
 @media(max-width:700px){
@@ -411,6 +437,29 @@ tr.dragging{background:var(--soft)}
 .bp-btn:hover{border-color:var(--gold)}
 .bp-btn.pr{background:#8f8846;border-color:#8f8846;color:#fff}
 }
+@media screen{
+/* --- New bookings (added after the booking was saved): kept below a "New" divider. Screen only. --- */
+#resBody tr.is-new td{background:#f7f5e8}
+#resBody tr.is-new td:first-child{box-shadow:inset 3px 0 0 #9d9650}
+#resBody tr.is-new:hover td{background:#f1efdc}
+#resBody tr.first-new td{padding-top:46px;border-top:1.5px solid #9d9650;background:linear-gradient(#fff 0,#fff 38px,#f7f5e8 38px)}
+#resBody tr.first-new:hover td{background:linear-gradient(#fff 0,#fff 38px,#f1efdc 38px)}
+#resBody tr.first-new td:first-child{position:relative;box-shadow:none;background:linear-gradient(#fff 0,#fff 38px,transparent 38px),linear-gradient(to right,#9d9650 0,#9d9650 3px,#f7f5e8 3px)}
+#resBody tr.first-new td:first-child::before{content:'New';position:absolute;left:6px;top:12px;background:#9d9650;color:#fff;font:600 10px var(--sans);letter-spacing:2px;text-transform:uppercase;border-radius:20px;padding:3px 10px}
+#resBody tr.first-new td:first-child::after{content:'Added after the last save \00b7  printed sheets keep everything in time order';position:absolute;left:74px;top:15px;white-space:nowrap;font:400 11px var(--sans);color:#5e5829}
+.res-table-edit .r-visits{width:44px;min-width:44px;max-width:44px}
+/* allergy positions (who has it): L, G, P1… */
+.tag .pos{font-weight:500;opacity:.85}
+.bp-pos{display:flex;flex-direction:column;gap:6px}
+.bp-prow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bp-pname{font-size:12px;color:var(--ink);min-width:86px}
+.bp-pname.al{color:#a8362b;font-weight:600}
+.bp-pchips{display:flex;flex-wrap:wrap;gap:4px}
+.bp-pc{min-width:30px;padding:3px 7px;border-radius:20px;border:1px solid var(--gold-light);background:#fff;color:var(--green-dark);font:500 11px var(--sans);cursor:pointer}
+.bp-pc:hover{border-color:var(--gold)}
+.bp-pc.on{background:#c8c28d;border-color:#c8c28d;color:#2f2c14}
+.bp-hint{font-size:11px;color:#8a8650}
+}
 @media print{.bk-pop{display:none !important}}
 </style>
 <script src="platform.js"></script><script src="brand.js"></script>
@@ -451,9 +500,9 @@ tr.dragging{background:var(--soft)}
                         <button onclick="printFOH('statement');hidePrintMenu()">FOH</button>
                     </div>
                     <div class="print-size-group">
-                        <div class="print-size-label">A4 <span>178×243mm</span></div>
-                        <button onclick="printBOH('a4');hidePrintMenu()">BOH</button>
-                        <button onclick="printFOH('a4');hidePrintMenu()">FOH</button>
+                        <div class="print-size-label">Letter <span>2 Statement sheets per page &middot; cut in half</span></div>
+                        <button onclick="printBOH('letter');hidePrintMenu()">BOH</button>
+                        <button onclick="printFOH('letter');hidePrintMenu()">FOH</button>
                     </div>
                 </div>
             </div>
@@ -494,9 +543,10 @@ tr.dragging{background:var(--soft)}
                         <th rowspan="2">Table</th>
                         <th rowspan="2">Sec</th>
                         <th rowspan="2">Menu</th>
-                        <th colspan="2" style="text-align:center;border-bottom:1px solid rgba(255,255,255,0.3)">Occasion</th>
                         <th rowspan="2" class="th-allergy">Allergies / Req</th>
+                        <th colspan="2" style="text-align:center;border-bottom:1px solid rgba(255,255,255,0.3)">Occasion</th>
                         <th rowspan="2" class="th-voucher">Voucher</th>
+                        <th rowspan="2">Visits</th>
                         <th rowspan="2">Notes</th>
                         <th rowspan="2"></th>
                     </tr>
@@ -1089,6 +1139,13 @@ function cleanNotes(text, hasVoucher, hasAllergy, hasOccasion) {
     return kept.join('. ').replace(/\.\s*\./g, '.').trim();
 }
 
+// Number of visits from the CSV, when the export has a column for it (VISITS / VISIT COUNT).
+function csvVisits(row) {
+    var v = row['VISITS'] || row['VISIT COUNT'] || row['VISITS COUNT'] || row['NO. OF VISITS'] || '';
+    v = String(v).replace(/[^0-9]/g, '');
+    return v;
+}
+
 // === POPULATE ===
 function populateFromCSV(rows) {
     var tbody = document.getElementById('resBody');
@@ -1102,7 +1159,7 @@ function populateFromCSV(rows) {
         var notesRaw = row['NOTES AND TAGS']||'';
         covers += pax;
         if (table) tblSet[table] = true;
-        addRow(time, pax, name, table, extractMenu(notesRaw), extractOccasionType(notesRaw), extractAllergies(notesRaw), extractNotes(notesRaw), '', '', '', extractVoucherCode(notesRaw), extractVoucherValue(notesRaw), extractOccasionDetail(notesRaw));
+        addRow(time, pax, name, table, extractMenu(notesRaw), extractOccasionType(notesRaw), extractAllergies(notesRaw), extractNotes(notesRaw), '', csvVisits(row), '', extractVoucherCode(notesRaw), extractVoucherValue(notesRaw), extractOccasionDetail(notesRaw));
     });
     document.getElementById('covers').value = covers;
     document.getElementById('tables').value = Object.keys(tblSet).length;
@@ -1161,10 +1218,12 @@ function mergeFromCSV(rows) {
                 var opt = Array.from(menuEl.options).find(function(o){ return o.value === csvMenu.split(', ')[0]; });
                 if (opt) { menuEl.value = opt.value; changedThis = true; }
             }
+            var vis = csvVisits(row), visEl = tr.querySelector('.r-visits');
+            if (vis && visEl && visEl.value !== vis) { visEl.value = vis; changedThis = true; }
             if (changedThis) updated++;
         } else {
-            // New guest — add cleaned row
-            addRow(time, pax, name, table, extractMenu(notesRaw), extractOccasionType(notesRaw), extractAllergies(notesRaw), extractNotes(notesRaw), '', '', '', extractVoucherCode(notesRaw), extractVoucherValue(notesRaw), extractOccasionDetail(notesRaw));
+            // New guest — add cleaned row (marked as new when the booking is already saved)
+            addRow(time, pax, name, table, extractMenu(notesRaw), extractOccasionType(notesRaw), extractAllergies(notesRaw), extractNotes(notesRaw), '', csvVisits(row), '', extractVoucherCode(notesRaw), extractVoucherValue(notesRaw), extractOccasionDetail(notesRaw), '', '', '', bookingIsSaved() ? '1' : '');
             added++;
         }
     });
@@ -1191,7 +1250,7 @@ function mergeFromCSV(rows) {
 }
 
 // === ROW MANAGEMENT ===
-function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher, visits, allergyPos, voucherCode, voucherValue, occasionPos, star, voucherProvider, voucherPin) {
+function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher, visits, allergyPos, voucherCode, voucherValue, occasionPos, star, voucherProvider, voucherPin, isNew) {
     // Handle old-style calls where voucher is a single field
     if (!voucherCode && voucher) { voucherCode = voucher; }
     if (!voucherProvider) voucherProvider = '';
@@ -1204,6 +1263,7 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
     var tbody = document.getElementById('resBody');
     var tr = document.createElement('tr');
     tr.draggable = false;
+    if (isNew) tr.classList.add('is-new');   // added after the booking was saved (screen only)
 
     // Determine section based on table number
     function getSectionLabel(tbl) {
@@ -1237,6 +1297,9 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
             '<option value="ALC"'+(menu.indexOf('ALC')>=0?' selected':'')+'>ALC</option>'+
             '<option value="Lunch Menu"'+(menu.indexOf('Lunch Menu')>=0?' selected':'')+'>Lunch Menu</option>'+
         '</select></td>' +
+        '<td class="a-cell"><button type="button" class="abtn" title="Allergies / requirements"></button>' +
+        '<textarea class="r-allergy a-hidden" rows="2">'+esc(allergy)+'</textarea>' +
+        '<input type="hidden" class="r-allergypos" value="'+esc(allergyPos||'')+'"></td>' +
         '<td><input type="text" value="'+esc(occasionPos||'')+'" class="r-occpos"></td>' +
         '<td><select class="r-occasion">'+
             '<option value=""'+(!occasion?' selected':'')+'>—</option>'+
@@ -1257,8 +1320,6 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
             '<option value="Welcome"'+((occasion||'')==='Welcome'?' selected':'')+'>Welcome</option>'+
             '<option value="Reunion"'+((occasion||'')==='Reunion'?' selected':'')+'>Reunion</option>'+
         '</select></td>' +
-        '<td class="a-cell"><button type="button" class="abtn" title="Allergies / requirements"></button>' +
-        '<textarea class="r-allergy a-hidden" rows="2">'+esc(allergy)+'</textarea></td>' +
         '<td class="v-cell"><button type="button" class="vbtn" title="Voucher"></button><div class="v-hidden">' +
         '<select class="r-vprovider">'+
 
@@ -1267,12 +1328,14 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
             '<option value="Buyagift"'+((voucherProvider||'')==='Buyagift'?' selected':'')+'>Buyagift</option>'+
             '<option value="Virgin"'+((voucherProvider||'')==='Virgin'?' selected':'')+'>Virgin</option>'+
             '<option value="Deposit"'+((voucherProvider||'')==='Deposit'?' selected':'')+'>Deposit</option>'+
-            ((voucherProvider && ['GRR','Buyagift','Virgin','Deposit'].indexOf(voucherProvider) < 0) ? '<option value="'+esc(voucherProvider)+'" data-custom="1" selected>'+esc(voucherProvider)+'</option>' : '')+
+            '<option value="Barclays"'+((voucherProvider||'')==='Barclays'?' selected':'')+'>Barclays</option>'+
+            ((voucherProvider && ['GRR','Buyagift','Virgin','Deposit','Barclays'].indexOf(voucherProvider) < 0) ? '<option value="'+esc(voucherProvider)+'" data-custom="1" selected>'+esc(voucherProvider)+'</option>' : '')+
         '</select>' +
         '<input type="text" value="'+esc(voucherCode||'')+'" class="r-vcode">' +
         '<input type="text" value="'+esc(voucherPin||'')+'" class="r-vpin">' +
         '<input type="text" value="'+esc(voucherValue||'')+'" class="r-vvalue" placeholder="£">' +
         '</div></td>' +
+        '<td><input type="number" value="'+esc(String(visits==null?'':visits))+'" class="r-visits" min="0" title="Number of visits"></td>' +
         '<td><input type="text" value="'+esc(notes||'')+'" class="r-notes"></td>' +
         '<td><button class="btn-remove-row" onclick="this.closest(\'tr\').remove();recalc();">&#215;</button></td>';
     tbody.appendChild(tr);
@@ -1322,7 +1385,9 @@ function updateSectionBadge(tableInput) {
     }
 }
 
-function addEmptyRow() { addRow('','','','','','','','','','','','','','',''); }
+// True when the rows on screen belong to a booking that has been saved.
+function bookingIsSaved() { return !!(window.syncGuard && syncGuard.state && syncGuard.state.linked); }
+function addEmptyRow() { addRow('','','','','','','','','','','','','','','','','', bookingIsSaved() ? '1' : ''); }
 
 // Toggle star/VIP badge
 function toggleStar(btn) {
@@ -1410,6 +1475,23 @@ function clearAll() {
     document.getElementById('uploadStatus').textContent = '';
 }
 
+// New bookings always sit below the saved ones; the first visible one carries the "New" divider.
+function groupNewRows() {
+    var body = document.getElementById('resBody');
+    if (!body) return;
+    var rows = Array.prototype.slice.call(body.children), seenNew = false, mixed = false;
+    rows.forEach(function(tr){ if (tr.classList.contains('is-new')) seenNew = true; else if (seenNew) mixed = true; });
+    if (mixed) rows.filter(function(tr){ return tr.classList.contains('is-new'); }).forEach(function(tr){ body.appendChild(tr); });
+    var first = null;
+    Array.prototype.forEach.call(body.children, function(tr){
+        tr.classList.remove('first-new');
+        if (!first && tr.classList.contains('is-new') && tr.style.display !== 'none') first = tr;
+    });
+    if (first) first.classList.add('first-new');
+}
+new MutationObserver(function(){ groupNewRows(); }).observe(document.getElementById('resBody'), { childList: true });
+document.getElementById('secFilters').addEventListener('click', function(){ setTimeout(groupNewRows, 0); });
+
 // === DRAG TO REORDER ===
 var dragRow = null;
 function enableDrag(tr) {
@@ -1443,6 +1525,14 @@ function enableDrag(tr) {
         }
     });
 }
+// Rows for the printed sheets: always in time order (new bookings slot into their time).
+// Same time = order on screen. Rows without a time go last.
+function printRows() {
+    var service = document.getElementById('service').value;
+    return gatherRows().map(function(r, i){ return { r: r, i: i, k: timeToMinutes(formatTimePrint(r.time, service)) }; })
+        .sort(function(a, b){ return (a.k - b.k) || (a.i - b.i); })
+        .map(function(x){ return x.r; });
+}
 // === GATHER ALL ROWS DATA ===
 function gatherRows() {
     var data = [];
@@ -1460,14 +1550,16 @@ function gatherRows() {
             occasion: tr.querySelector('.r-occasion').value,
             occasionPos: tr.querySelector('.r-occpos').value,
             allergy: tr.querySelector('.r-allergy').value,
-            allergyPos: '',
+            allergyPos: (tr.querySelector('.r-allergypos') || {}).value || '',
             notes: tr.querySelector('.r-notes').value,
             voucherProvider: tr.querySelector('.r-vprovider').value,
             voucherCode: tr.querySelector('.r-vcode').value,
             voucherValue: tr.querySelector('.r-vvalue').value,
             voucherPin: (tr.querySelector('.r-vpin') || {}).value || '',
+            visits: (tr.querySelector('.r-visits') || {}).value || '',
             section: secOverride,
-            star: starVal
+            star: starVal,
+            isNew: tr.classList.contains('is-new') ? '1' : ''
         });
     });
     return data;
@@ -1485,8 +1577,8 @@ function getHeaderInfo() {
 }
 
 // === PAPER SIZE CONFIG ===
-// 'statement' = 5.5×8.5in (half-letter). 'a4' = 178×243mm (our custom sheet).
-// The A4 sheet is bigger, so more sections fit on one page before we force a
+// 'statement' = 5.5×8.5in (half-letter). 'letter' = 8.5×11in.
+// The Letter sheet is bigger, so more sections fit on one page before we force a
 // page break — same font size, just more content per sheet.
 var PAPER = {
     statement: {
@@ -1495,12 +1587,13 @@ var PAPER = {
         // how many reservations can share a page before splitting each to its own
         sharePageMax: 5
     },
-    a4: {
-        portrait:  '178mm 243mm',
-        landscape: '243mm 178mm',
+    letter: {
+        portrait:  '8.5in 11in',
+        landscape: '11in 8.5in',
         sharePageMax: 12
     }
 };
+PAPER.a4 = PAPER.letter;   // old name (the menu used to say A4)
 function paperCfg(paper) { return PAPER[paper] || PAPER.statement; }
 function setPageStyle(dims, margin) {
     var existing = document.getElementById('printOrientationStyle');
@@ -1554,7 +1647,7 @@ function printHead(label, service, dateStr, covers, tables){
 }
 function printKitchen() {
     var info = getHeaderInfo();
-    var rows = gatherRows();
+    var rows = printRows();
     setPrintOrientation(rows.length, 8);
     document.getElementById('printPage1').innerHTML = buildKitchenHTML(info, rows);
     document.getElementById('printArea').style.display = 'block';
@@ -1564,7 +1657,7 @@ function printKitchen() {
 // === PRINT PASTRY ===
 function printPastry() {
     var info = getHeaderInfo();
-    var rows = gatherRows();
+    var rows = printRows();
     setPrintOrientation(rows.length, 9);
     document.getElementById('printPage1').innerHTML = buildPastryHTML(info, rows);
     document.getElementById('printArea').style.display = 'block';
@@ -1573,7 +1666,7 @@ function printPastry() {
 // === PRINT SALON ===
 function printSalon(section) {
     var info = getHeaderInfo();
-    var rows = gatherRows();
+    var rows = printRows();
     var sectionLabel = 'SECTION ' + section;
     var filtered = filterBySection(rows, section);
     setPrintOrientation(filtered.length, 11);
@@ -1585,7 +1678,7 @@ function printSalon(section) {
 // === PRINT RECEPTION ===
 function printReception() {
     var info = getHeaderInfo();
-    var rows = gatherRows();
+    var rows = printRows();
     setPrintOrientation(rows.length, 11);
     document.getElementById('printPage1').innerHTML = buildReceptionHTML(info, rows);
     document.getElementById('printArea').style.display = 'block';
@@ -1595,54 +1688,101 @@ function printReception() {
 // === PRINT RECEPTION (L) — same as Pastry but titled Reception (L) ===
 function printReceptionL() {
     var info = getHeaderInfo();
-    var rows = gatherRows();
+    var rows = printRows();
     setPrintOrientation(rows.length, 8);
     document.getElementById('printPage1').innerHTML = buildReceptionLHTML(info, rows);
     document.getElementById('printArea').style.display = 'block';
     setTimeout(function(){ window.print(); }, 300);
 }
 
-function buildKitchenHTML(info, rows) {
-    var html = '';
-    var menuCount = {Prestige:0,Discovery:0,ALC:0,'Lunch Menu':0};
-    var allergyList = [];
-
-    rows.forEach(function(r) {
-        if (r.menu && menuCount[r.menu] !== undefined) menuCount[r.menu] += parseInt(r.pax)||1;
-        if (r.allergy && r.allergy.trim()) allergyList.push({name:r.name||'Guest',table:r.table,pax:r.pax,allergies:r.allergy});
-        var starName = (r.star ? '\u2605 ' : '') + esc(r.name);
-        html += '<tr><td>'+formatTimePrint(r.time,info.service)+'</td><td>'+esc(r.pax)+'</td><td style="white-space:nowrap"><strong>'+starName+'</strong></td><td>'+esc(r.table)+'</td><td>'+esc(r.menu)+'</td><td class="'+(r.allergy?'allergy-cell':'')+'">'+formatAllergyPrint(r.allergy)+'</td></tr>';
-    });
-    for (var i=0;i<3;i++) html += '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>';
-
-    var mp = [];
-    Object.keys(menuCount).forEach(function(n){if(menuCount[n]>0)mp.push('<span>'+n+': '+menuCount[n]+'</span>');});
-    var menuHTML = mp.length ? '<div class="menu-summary">'+mp.join('')+'</div>' : '';
-
-
-    return printHead('KITCHEN', info.service, info.dateStr, info.covers, info.tables)+'<table class="print-table"><colgroup><col style="width:10%"><col style="width:6%"><col style="width:24%"><col style="width:6%"><col style="width:14%"><col style="width:40%"></colgroup><thead><tr><th>Time</th><th>Pax</th><th>Name</th><th>Tbl</th><th>Menu</th><th>Allergy / Req</th></tr></thead><tbody>'+html+'</tbody></table>'+menuHTML;
+// One printed table. keys = columns (see PCOL), widths in %. Three blank rows for walk-ins.
+var PCOL = {
+    time:    { h: 'Time',      f: function(r, info){ return formatTimePrint(r.time, info.service); }, cls: 'c-time' },
+    pax:     { h: 'Pax',       f: function(r){ return esc(String(r.pax || '')); } },
+    star:    { h: '\u2605',    f: function(r){ return r.star ? '\u2605' : ''; }, cls: 'c-star' },
+    name:    { h: 'Name',      f: function(r){ return '<strong>' + esc(r.name) + '</strong>'; } },
+    table:   { h: 'Tbl',       f: function(r){ return esc(r.table); } },
+    sec:     { h: 'Sec',       f: function(r){ return esc(printSec(r)); } },
+    menu:    { h: 'Menu',      f: function(r){ return esc(r.menu); } },
+    allergy: { h: 'Allergies', f: function(r){ return allergyPrintHTML(r); }, td: function(r){ return r.allergy ? 'allergy-cell' : ''; } },
+    occasion:{ h: 'Occasion',  f: function(r){ return esc(r.occasion || ''); }, td: function(r){ return r.occasion ? 'occasion-cell' : ''; } },
+    occwho:  { h: '',          f: function(r){ return esc(r.occasionPos || ''); }, cls: 'c-occwho' },     // who it is for (right of the occasion)
+    voucher: { h: 'Voucher',   f: function(r){
+                   var out = [], pv = r.voucherProvider || '', code = r.voucherCode || r.voucher || '', amt = fmtMoney(r.voucherValue);
+                   if (pv) out.push('<b>' + esc(pv) + '</b>');
+                   if (code) out.push(esc(code));
+                   if (amt) out.push(esc(amt));
+                   return out.join(' ');
+               }, cls: 'c-voucher' },
+    visits:  { h: 'Visits',    f: function(r){ return esc(String(r.visits || '')); } },
+    notes:   { h: 'Notes',     f: function(r){ return esc(r.notes); }, cls: 'notes-cell' },
+    allergyPlain: { h: 'Allergies', f: function(r){ return allergyPrintHTML({ allergy: r.allergy }); }, td: function(r){ return r.allergy ? 'allergy-cell' : ''; } },
+    cloak:   { h: 'Cloak',     f: function(){ return ''; }, cls: 'c-cloak' }      // written by hand at reception
+};
+// Allergies for the sheet, one per line, with who has it (L / G) when it was picked on screen.
+function allergyPrintHTML(r) {
+    var s = String(r.allergy || '');
+    if (!s.trim()) return '';
+    var map = {};
+    try { map = r.allergyPos ? JSON.parse(r.allergyPos) : {}; } catch (e) { map = {}; }
+    var toks = [], cur = '', depth = 0;
+    for (var i = 0; i < s.length; i++) {
+        var ch = s.charAt(i);
+        if (ch === '(') depth++; else if (ch === ')') depth = Math.max(0, depth - 1);
+        if ((ch === ',' || ch === '\n') && depth === 0) { if (cur.trim()) toks.push(cur.trim()); cur = ''; }
+        else cur += ch;
+    }
+    if (cur.trim()) toks.push(cur.trim());
+    return toks.map(function(tk) {
+        var key = tk.replace(/^\d+\s*x\s+/i, '').trim().toLowerCase();
+        var who = (map[key] || []).filter(function(x){ return x === 'L' || x === 'G'; });
+        return esc(tk) + (who.length ? ' <span class="p-who">' + who.join(' ') + '</span>' : '');
+    }).join('<br>');
+}
+function printSec(r) {
+    var s = String(r.section || '').trim();
+    if (s === 'S1' || s === 'S2' || s === 'KT') return s;
+    if (KT_TABLES.indexOf(r.table) >= 0) return 'KT';
+    if (SECTION_1_TABLES.indexOf(r.table) >= 0) return 'S1';
+    if (SECTION_2_TABLES.indexOf(r.table) >= 0) return 'S2';
+    return '';
+}
+function menuSummaryHTML(rows) {
+    var menuCount = {Prestige:0,Discovery:0,ALC:0,'Lunch Menu':0}, mp = [];
+    rows.forEach(function(r){ if (r.menu && menuCount[r.menu] !== undefined) menuCount[r.menu] += parseInt(r.pax)||1; });
+    Object.keys(menuCount).forEach(function(n){ if (menuCount[n] > 0) mp.push('<span>'+n+': '+menuCount[n]+'</span>'); });
+    return mp.length ? '<div class="menu-summary">'+mp.join('')+'</div>' : '';
+}
+function buildSheetHTML(label, info, rows, keys, widths, covers, tables, extraClass, blanks) {
+    if (blanks == null) blanks = 3;
+    var cols = '<colgroup>' + widths.map(function(w){ return '<col style="width:' + w + '%">'; }).join('') + '</colgroup>';
+    var head = '<thead><tr>' + keys.map(function(k, i){
+        if (k === 'occwho' && keys[i - 1] === 'occasion') return '';
+        var span = (k === 'occasion' && keys[i + 1] === 'occwho') ? ' colspan="2"' : '';
+        return '<th' + span + (PCOL[k].cls ? ' class="' + PCOL[k].cls + '"' : '') + '>' + PCOL[k].h + '</th>';
+    }).join('') + '</tr></thead>';
+    var body = rows.map(function(r){
+        return '<tr>' + keys.map(function(k){
+            var c = PCOL[k], cl = [c.cls || '', c.td ? c.td(r) : ''].join(' ').trim();
+            return '<td' + (cl ? ' class="' + cl + '"' : '') + '>' + c.f(r, info) + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+    for (var i = 0; i < blanks; i++) body += '<tr>' + keys.map(function(){ return '<td>&nbsp;</td>'; }).join('') + '</tr>';
+    return printHead(label, info.service, info.dateStr, covers, tables) +
+        '<table class="print-table pt-grid' + (extraClass ? ' ' + extraClass : '') + '">' + cols + head + '<tbody>' + body + '</tbody></table>';
+}
+// Kitchen: Time, Pax, ★, Name, Table, Menu, Allergies
+// Kitchen: Time, Pax, ★, Name, Table, Menu, Allergies
+function buildKitchenHTML(info, rows, first, last) {
+    return buildSheetHTML('KITCHEN' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','star','name','table','menu','allergyPlain'],
+        [10, 6, 4, 28, 7, 15, 30], info.covers, info.tables, '', last === false ? 0 : 3);
 }
 
-function buildPastryHTML(info, rows) {
-    var html = '';
-    var menuCount = {Prestige:0,Discovery:0,ALC:0,'Lunch Menu':0};
-    var allergyList = [];
-
-    rows.forEach(function(r) {
-        if (r.menu && menuCount[r.menu] !== undefined) menuCount[r.menu] += parseInt(r.pax)||1;
-        if (r.allergy && r.allergy.trim()) allergyList.push({name:r.name||'Guest',table:r.table,pax:r.pax,allergies:r.allergy});
-        var starName = (r.star ? '\u2605 ' : '') + esc(r.name);
-        var occClass = r.occasion ? 'occasion-cell' : '';
-        html += '<tr><td>'+formatTimePrint(r.time,info.service)+'</td><td>'+esc(r.pax)+'</td><td style="white-space:nowrap"><strong>'+starName+'</strong></td><td>'+esc(r.table)+'</td><td>'+esc(r.menu)+'</td><td class="'+occClass+'">'+esc(r.occasion)+'</td><td class="'+(r.allergy?'allergy-cell':'')+'">'+formatAllergyPrint(r.allergy)+'</td></tr>';
-    });
-    for (var i=0;i<3;i++) html += '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>';
-
-    var mp = [];
-    Object.keys(menuCount).forEach(function(n){if(menuCount[n]>0)mp.push('<span>'+n+': '+menuCount[n]+'</span>');});
-    var menuHTML = mp.length ? '<div class="menu-summary">'+mp.join('')+'</div>' : '';
-
-
-    return printHead('PASTRY', info.service, info.dateStr, info.covers, info.tables)+'<table class="print-table"><colgroup><col style="width:8%"><col style="width:5%"><col style="width:20%"><col style="width:6%"><col style="width:13%"><col style="width:20%"><col style="width:28%"></colgroup><thead><tr><th>Time</th><th>Pax</th><th>Name</th><th>Tbl</th><th>Menu</th><th>Occasion</th><th>Allergy / Req</th></tr></thead><tbody>'+html+'</tbody></table>'+menuHTML;
+// Pastry: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion
+// Pastry: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion (+ who it is for)
+function buildPastryHTML(info, rows, first, last) {
+    return buildSheetHTML('PASTRY' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','star','name','table','menu','allergyPlain','occasion'],
+        [9, 5, 4, 22, 6, 13, 23, 18], info.covers, info.tables, '', last === false ? 0 : 3);
 }
 
 function buildReceptionLHTML(info, rows) {
@@ -1667,100 +1807,153 @@ function buildReceptionLHTML(info, rows) {
     return printHead('RECEPTION (L)', info.service, info.dateStr, info.covers, info.tables)+'<table class="print-table"><thead><tr><th>Time</th><th>Pax</th><th>Name</th><th>Tbl</th><th>Menu</th><th colspan="2">Occasion</th><th colspan="2">Allergy / Req</th><th>Notes</th></tr></thead><tbody>'+html+'</tbody></table>'+menuHTML;
 }
 
-function buildSalonHTML(info, filtered, sectionLabel, allowedTables) {
-    var sectionCovers = 0;
-    var html = '';
-    var allergyList = [];
-    var menuCount = {Prestige:0,Discovery:0,ALC:0,'Lunch Menu':0};
-
-    filtered.forEach(function(r) {
-        sectionCovers += parseInt(r.pax) || 0;
-        if (r.menu && menuCount[r.menu] !== undefined) menuCount[r.menu] += parseInt(r.pax)||1;
-        if (r.allergy && r.allergy.trim()) allergyList.push({name:r.name||'Guest',table:r.table,pax:r.pax,allergies:r.allergy});
-        var starName = (r.star ? '\u2605 ' : '') + esc(r.name);
-        var occClass = r.occasion ? 'occasion-cell' : '';
-        html += '<tr><td>'+formatTimePrint(r.time,info.service)+'</td><td>'+esc(r.pax)+'</td><td style="white-space:nowrap"><strong>'+starName+'</strong></td><td>'+esc(r.table)+'</td><td>'+esc(r.menu)+'</td><td class="'+occClass+'">'+esc(r.occasion)+'</td><td>'+esc(r.occasionPos||'')+'</td><td class="'+(r.allergy?'allergy-cell':'')+'">'+formatAllergyPrint(r.allergy)+'</td><td></td><td>'+esc(r.voucherProvider||'')+'</td><td>'+esc(r.voucherCode||r.voucher||'')+'</td><td>'+esc(fmtMoney(r.voucherValue))+'</td><td class="notes-cell">'+esc(r.notes)+'</td></tr>';
-    });
-    for (var i=0;i<3;i++) html += '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td><td></td><td></td><td></td><td>&nbsp;</td></tr>';
-
-    var mp = [];
-    Object.keys(menuCount).forEach(function(n){if(menuCount[n]>0)mp.push('<span>'+n+': '+menuCount[n]+'</span>');});
-    var menuHTML = mp.length ? '<div class="menu-summary">'+mp.join('')+'</div>' : '';
-
-
-    return printHead(sectionLabel, info.service, info.dateStr, sectionCovers, filtered.length)+'<table class="print-table"><thead><tr><th>Time</th><th>Pax</th><th>Name</th><th>Tbl</th><th>Menu</th><th colspan="2">Occasion</th><th>Allergy / Req</th><th style="width:4px;padding:0"></th><th colspan="3">Pre Payment</th><th>Notes</th></tr></thead><tbody>'+html+'</tbody></table>'+menuHTML;
+// Section 1 / Section 2: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion, Voucher, Visits, Notes
+// Section 1 / Section 2: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion (+ who), Voucher, Visits, Notes
+function buildSalonHTML(info, filtered, sectionLabel, allowedTables, first, last, allRows) {
+    var all = allRows || filtered, sectionCovers = 0;
+    all.forEach(function(r){ sectionCovers += parseInt(r.pax) || 0; });
+    return buildSheetHTML(sectionLabel + (first === false ? ' (cont.)' : ''), info, filtered,
+        ['time','pax','star','name','table','menu','allergy','occasion','occwho','voucher','visits','notes'],
+        [7, 4, 3, 13, 4, 9, 14, 9, 8, 12, 4, 13], sectionCovers, all.length, '', last === false ? 0 : 3);
 }
 
 // === PRINT BOH (Kitchen x2 + Pastry) ===
 function printBOH(paper) {
-    var cfg = paperCfg(paper);
     var info = getHeaderInfo();
-    var rows = gatherRows();
-
-    setPageStyle(cfg.portrait, '2mm');
-
+    var rows = printRows();
     showPrintArea('printAreaTriple');
-
-    if (rows.length > cfg.sharePageMax) {
-        // Each section on its own page
-        document.getElementById('tripleCell1').innerHTML = buildKitchenHTML(info, rows);
-        document.getElementById('tripleCell1').className = 'triple-cell';
-        document.getElementById('tripleCell2').innerHTML = buildKitchenHTML(info, rows);
-        document.getElementById('tripleCell2').className = 'triple-cell page-break';
-        document.getElementById('tripleCell3').innerHTML = buildPastryHTML(info, rows);
-        document.getElementById('tripleCell3').className = 'triple-cell page-break';
-    } else {
-        // Kitchen x2 share page 1, Pastry on page 2
-        document.getElementById('tripleCell1').innerHTML = buildKitchenHTML(info, rows);
-        document.getElementById('tripleCell1').className = 'triple-cell';
-        document.getElementById('tripleCell2').innerHTML = buildKitchenHTML(info, rows);
-        document.getElementById('tripleCell2').className = 'triple-cell';
-        document.getElementById('tripleCell3').innerHTML = buildPastryHTML(info, rows);
-        document.getElementById('tripleCell3').className = 'triple-cell page-break';
-    }
-
+    // Kitchen x2 may share a box when they fit; Pastry always gets its own box.
+    var blocks = []
+        .concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildKitchenHTML(info, part, first, last); }, rows, 'portrait', 0.88), 'k'))
+        .concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildKitchenHTML(info, part, first, last); }, rows, 'portrait', 0.88), 'k'))
+        .concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildPastryHTML(info, part, first, last); }, rows, 'portrait', 0.88), 'p'));
+    renderBoxes(packBoxes(blocks, 'portrait'), 'portrait', paper);
     setTimeout(function(){ window.print(); }, 300);
 }
 
 // === PRINT FOH (Section 1 + Section 2 + Reception + Station Sheets) ===
 function printFOH(paper) {
-    var cfg = paperCfg(paper);
     var info = getHeaderInfo();
-    var rows = gatherRows();
-
-    setPageStyle(cfg.landscape, '2mm');
-
+    var rows = printRows();
     showPrintArea('printAreaTriple');
-
     var s1Rows = filterBySection(rows, 1);
     var s2Rows = filterBySection(rows, 2);
-
-    if (rows.length > cfg.sharePageMax) {
-        // Each section on its own page
-        document.getElementById('tripleCell1').innerHTML = buildSalonHTML(info, s1Rows, 'SECTION 1', SECTION_1_TABLES);
-        document.getElementById('tripleCell1').className = 'triple-cell';
-        document.getElementById('tripleCell2').innerHTML = s2Rows.length > 0 ? buildSalonHTML(info, s2Rows, 'SECTION 2', SECTION_2_TABLES) : '';
-        document.getElementById('tripleCell2').className = s2Rows.length > 0 ? 'triple-cell page-break' : 'triple-cell';
-        document.getElementById('tripleCell3').innerHTML = buildReceptionHTML(info, rows);
-        document.getElementById('tripleCell3').className = 'triple-cell page-break';
-    } else {
-        // Section 1 + Section 2 share page 1, Reception on page 2
-        document.getElementById('tripleCell1').innerHTML = buildSalonHTML(info, s1Rows, 'SECTION 1', SECTION_1_TABLES);
-        document.getElementById('tripleCell1').className = 'triple-cell';
-        document.getElementById('tripleCell2').innerHTML = s2Rows.length > 0 ? buildSalonHTML(info, s2Rows, 'SECTION 2', SECTION_2_TABLES) : '';
-        document.getElementById('tripleCell2').className = 'triple-cell';
-        document.getElementById('tripleCell3').innerHTML = buildReceptionHTML(info, rows);
-        document.getElementById('tripleCell3').className = 'triple-cell page-break';
-    }
-
-    // Append the station sheets (S1, S2, KT) after the FOH pages
-    appendStationPagesToTriple(info, rows);
-
-    // Make sure the Reception page (its own full page) never overflows onto a
-    // second sheet: scale it down to fit the printable page height if needed.
-    fitCellToPage('tripleCell3', cfg.landscape);
-
+    // Section 1 + 2 may share a box when they fit; Reception and the station sheets get their own.
+    var blocks = tagBlocks(sheetBlocks(function(part, first, last){ return buildSalonHTML(info, part, 'SECTION 1', SECTION_1_TABLES, first, last, s1Rows); }, s1Rows, 'landscape', 0.88), 's');
+    if (s2Rows.length > 0) blocks = blocks.concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildSalonHTML(info, part, 'SECTION 2', SECTION_2_TABLES, first, last, s2Rows); }, s2Rows, 'landscape', 0.88), 's'));
+    blocks = blocks.concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildReceptionHTML(info, part, first, last); }, rows, 'landscape', 0.7), 'r'));
+    buildAllStationPages(info, rows).forEach(function(html, i){ blocks.push(fitWholeBlock(html, 'landscape', 'st' + i)); });
+    renderBoxes(packBoxes(blocks, 'landscape'), 'landscape', paper);
     setTimeout(function(){ window.print(); }, 300);
+}
+
+// ── Printed pages ──
+// Every sheet is laid out in a Statement-size box (5.5 x 8.5 in, minus the 2 mm page margins).
+// Statement paper: one box per page. Letter paper: two boxes per page (BOH side by side on a
+// landscape Letter, FOH one above the other on a portrait Letter), so cutting the page in half
+// gives two Statement sheets.
+var PX_IN = 96, PX_MM = 3.7795;
+var SHEET_BOX = {
+    portrait:  { w: 5.5 * PX_IN - 4.6 * PX_MM, h: 8.5 * PX_IN - 4.6 * PX_MM },
+    landscape: { w: 8.5 * PX_IN - 4.6 * PX_MM, h: 5.5 * PX_IN - 4.6 * PX_MM }
+};
+// Height of a sheet laid out off-screen at the box width (optionally zoomed).
+function measureSheet(html, w, zoom) {
+    var box = document.createElement('div');
+    box.className = 'print-triple-page';
+    box.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;width:' + w + 'px';
+    box.innerHTML = '<div class="triple-cell bx-cell">' + (zoom && zoom < 1 ? '<div style="zoom:' + zoom + '">' + html + '</div>' : html) + '</div>';
+    document.body.appendChild(box);
+    var h = box.firstChild.offsetHeight;
+    box.parentNode.removeChild(box);
+    return h;
+}
+// Shrink a whole block (up to minZoom) until it fits one box. Returns the zoom, or 0 if it can't.
+function zoomToFit(html, orient, minZoom) {
+    var B = SHEET_BOX[orient], h = measureSheet(html, B.w);
+    if (h <= B.h) return 1;
+    var z = B.h / h;
+    for (var i = 0; i < 8 && z >= minZoom; i++) {
+        if (measureSheet(html, B.w, z) <= B.h) return z;
+        z *= 0.97;
+    }
+    return 0;
+}
+// A sheet that is too long is first shrunk a little (down to minZoom); if it still doesn't fit,
+// it continues in the next box ("cont."), with the walk-in rows at the end of the last piece.
+function sheetBlocks(build, rows, orient, minZoom) {
+    var B = SHEET_BOX[orient], out = [], rest = rows.slice(), first = true;
+    while (true) {
+        var html = build(rest, first, true), z = zoomToFit(html, orient, minZoom);
+        if (z) { out.push({ html: html, zoom: z, h: z < 1 ? B.h : measureSheet(html, B.w) }); break; }
+        var lo = 1, hi = rest.length - 1, best = 1;
+        while (lo <= hi) {
+            var mid = (lo + hi) >> 1;
+            if (measureSheet(build(rest.slice(0, mid), first, false), B.w) <= B.h) { best = mid; lo = mid + 1; } else hi = mid - 1;
+        }
+        var part = build(rest.slice(0, best), first, false);
+        out.push({ html: part, zoom: 1, h: measureSheet(part, B.w) });
+        rest = rest.slice(best); first = false;
+        if (!rest.length) break;
+    }
+    return out;
+}
+function fitWholeBlock(html, orient, group) {
+    var z = zoomToFit(html, orient, 0.3) || 0.3;
+    return { html: html, zoom: z, h: SHEET_BOX[orient].h, group: group };
+}
+function tagBlocks(list, group) { list.forEach(function(b){ b.group = group; }); return list; }
+// Blocks of the same group share a box while they fit; a shrunk block always fills its own box.
+function packBoxes(blocks, orient) {
+    var B = SHEET_BOX[orient], boxes = [], cur = null;
+    blocks.forEach(function(b) {
+        if (cur && cur.group === b.group && b.zoom === 1 && cur.zoom === 1 && cur.used + b.h <= B.h) {
+            cur.blocks.push(b); cur.used += b.h;
+        } else {
+            cur = { group: b.group, zoom: b.zoom, used: b.h, blocks: [b] };
+            boxes.push(cur);
+        }
+    });
+    return boxes;
+}
+function renderBoxes(boxes, orient, paper) {
+    var B = SHEET_BOX[orient], letter = paper === 'letter' || paper === 'a4';
+    var per = letter ? 2 : 1;
+    var cls = letter ? (orient === 'portrait' ? 'two-across' : 'two-down') : 'one';
+    // page: Statement = the box itself; Letter = two boxes (BOH landscape Letter, FOH portrait Letter)
+    var dims = letter ? (orient === 'portrait' ? '11in 8.5in' : '8.5in 11in') : (orient === 'portrait' ? '5.5in 8.5in' : '8.5in 5.5in');
+    setPageStyle(dims, '2mm');
+    var html = '';
+    for (var i = 0; i < boxes.length; i += per) {
+        html += '<div class="sheet-page ' + cls + '">' + boxes.slice(i, i + per).map(function(bx) {
+            return '<div class="bx" style="width:' + B.w.toFixed(1) + 'px;height:' + B.h.toFixed(1) + 'px">' + bx.blocks.map(function(b) {
+                return '<div class="triple-cell bx-cell">' + (b.zoom < 1 ? '<div style="zoom:' + b.zoom.toFixed(3) + '">' + b.html + '</div>' : b.html) + '</div>';
+            }).join('') + '</div>';
+        }).join('') + '</div>';
+    }
+    document.querySelector('#printAreaTriple .print-triple-page').innerHTML = html;
+}
+
+// Would these sheets fit together on one printed page? They are laid out off-screen at the
+// printable width of the page (2 mm margins) and their height is compared with the page.
+function blocksFitOnPage(htmls, dims) {
+    function px(s) {
+        var m = String(s || '').match(/([\d.]+)(in|mm|px)?/);
+        if (!m) return 0;
+        var v = parseFloat(m[1]);
+        return m[2] === 'in' ? v * 96 : (m[2] === 'mm' ? v * 3.7795 : v);
+    }
+    var parts = String(dims || '').trim().split(/\s+/), margins = 2 * 3.7795 * 2;
+    var W = px(parts[0]) - margins, H = px(parts[1]) - margins - 12;    // 12px safety
+    if (!(W > 0 && H > 0)) return false;
+    var box = document.createElement('div');
+    box.className = 'print-triple-page';
+    box.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;width:' + W + 'px';
+    box.innerHTML = htmls.map(function(h){ return '<div class="triple-cell" style="height:auto">' + h + '</div>'; }).join('');
+    document.body.appendChild(box);
+    var used = box.scrollHeight;
+    box.parentNode.removeChild(box);
+    return used <= H;
 }
 
 // Scale a full-page print cell down so its content always fits one printed
@@ -1816,7 +2009,7 @@ function appendStationPagesToTriple(info, rows) {
 function printStationSheet(paper) {
     var cfg = paperCfg(paper);
     var info = getHeaderInfo();
-    var rows = gatherRows();
+    var rows = printRows();
 
     // Landscape so all the section's tables fit across the sheet
     setPageStyle(cfg.landscape, '4mm');
@@ -1842,7 +2035,6 @@ function buildAllStationPages(info, rows) {
     if (sectionBlocks) pages.push(stationPage(sectionBlocks));
 
     // Kitchen Table on its own page.
-    if (kt.length > 0) pages.push(stationPage(buildKTStationHTML(info, kt)));
     return pages;
 }
 
@@ -1971,26 +2163,12 @@ function buildKTStationHTML(info, ktRows) {
     return stationBlock('KITCHEN TABLE', body);
 }
 
-function buildReceptionHTML(info, rows) {
-    var html = '';
-    var menuCount = {Prestige:0,Discovery:0,ALC:0,'Lunch Menu':0};
-    var allergyList = [];
-
-    rows.forEach(function(r) {
-        if (r.menu && menuCount[r.menu] !== undefined) menuCount[r.menu] += parseInt(r.pax)||1;
-        if (r.allergy && r.allergy.trim()) allergyList.push({name:r.name||'Guest',table:r.table,pax:r.pax,allergies:r.allergy});
-        var starName = (r.star ? '\u2605 ' : '') + esc(r.name);
-        var occClass = r.occasion ? 'occasion-cell' : '';
-        html += '<tr><td>'+formatTimePrint(r.time,info.service)+'</td><td>'+esc(r.pax)+'</td><td style="white-space:nowrap"><strong>'+starName+'</strong></td><td>'+esc(r.table)+'</td><td>'+esc(r.menu)+'</td><td class="'+occClass+'">'+esc(r.occasion)+'</td><td>'+esc(r.occasionPos||'')+'</td><td class="'+(r.allergy?'allergy-cell':'')+'">'+formatAllergyPrint(r.allergy)+'</td><td></td><td>'+esc(r.voucherProvider||'')+'</td><td>'+esc(r.voucherCode||r.voucher||'')+'</td><td>'+esc(fmtMoney(r.voucherValue))+'</td><td class="notes-cell">'+esc(r.notes)+'</td></tr>';
-    });
-    for (var i=0;i<3;i++) html += '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td><td></td><td></td></tr>';
-
-    var mp = [];
-    Object.keys(menuCount).forEach(function(n){if(menuCount[n]>0)mp.push('<span>'+n+': '+menuCount[n]+'</span>');});
-    var menuHTML = mp.length ? '<div class="menu-summary">'+mp.join('')+'</div>' : '';
-
-
-    return printHead('RECEPTION', info.service, info.dateStr, info.covers, info.tables)+'<table class="print-table reception-table"><thead><tr><th>Time</th><th>Pax</th><th>Name</th><th>Tbl</th><th>Menu</th><th colspan="2">Occasion</th><th colspan="2">Allergy / Req</th><th colspan="3">Pre Payment</th><th>Notes</th></tr></thead><tbody>'+html+'</tbody></table>'+menuHTML;
+// Reception: Time, Pax, ★, Name, Table, Sec, Menu, Occasion, Voucher, Visits, Notes
+// Reception: Time, Pax, ★, Name, Table, Sec, Menu, Occasion (+ who), Voucher, Visits, Notes
+function buildReceptionHTML(info, rows, first, last) {
+    return buildSheetHTML('RECEPTION' + (first === false ? ' (cont.)' : ''), info, rows,
+        ['time','pax','star','name','table','cloak','sec','menu','occasion','occwho','voucher','visits','notes'],
+        [7, 4, 3, 14, 4, 5, 4, 9, 9, 8, 13, 5, 15], info.covers, info.tables, 'reception-table', last === false ? 0 : 3);
 }
 
 // === SAVE / LOAD BOOKINGS (Firestore) ===
@@ -2063,7 +2241,7 @@ function loadBooking(key) {
         var tbody = document.getElementById('resBody');
         tbody.innerHTML = '';
         data.rows.forEach(function(r) {
-            addRow(r.time, r.pax, r.name, r.table, r.menu, r.occasion, r.allergy, r.notes, r.voucher||r.voucherCode||"", r.visits, r.allergyPos||"", r.voucherCode||r.voucher||"", r.voucherValue||"", r.occasionPos||"", r.star||"", r.voucherProvider||"", r.voucherPin||"");
+            addRow(r.time, r.pax, r.name, r.table, r.menu, r.occasion, r.allergy, r.notes, r.voucher||r.voucherCode||"", r.visits, r.allergyPos||"", r.voucherCode||r.voucher||"", r.voucherValue||"", r.occasionPos||"", r.star||"", r.voucherProvider||"", r.voucherPin||"", r.isNew||"");
         });
         document.getElementById('formArea').classList.add('visible');
         if (window.syncGuard) syncGuard.afterLoad(key, data);
@@ -2143,7 +2321,7 @@ function autoLoadBooking() {
             var tbody = document.getElementById('resBody');
             tbody.innerHTML = '';
             data.rows.forEach(function(r) {
-                addRow(r.time, r.pax, r.name, r.table, r.menu, r.occasion, r.allergy, r.notes, r.voucher||r.voucherCode||"", r.visits, r.allergyPos||"", r.voucherCode||r.voucher||"", r.voucherValue||"", r.occasionPos||"", r.star||"", r.voucherProvider||"", r.voucherPin||"");
+                addRow(r.time, r.pax, r.name, r.table, r.menu, r.occasion, r.allergy, r.notes, r.voucher||r.voucherCode||"", r.visits, r.allergyPos||"", r.voucherCode||r.voucher||"", r.voucherValue||"", r.occasionPos||"", r.star||"", r.voucherProvider||"", r.voucherPin||"", r.isNew||"");
             });
             document.getElementById('formArea').classList.add('visible');
             if (window.syncGuard) syncGuard.afterLoad(key, data);
@@ -2284,7 +2462,7 @@ addRow = function() {
 (function(){
   var ALLERGENS = ['Shellfish','Prawn','Crab','Lobster','Mollusc','Fish Allergy','Peanut','Nut','Gluten Free','Wheat','Dairy Free','Lactose','Egg','Soy','Sesame','Mustard','Sulphite','Lupin','Celery'];
   var DIETS = ['Vegetarian','Vegan','Pescatarian','Halal','Kosher','No Pork','No Beef','No Lamb','No Alcohol'];
-  var PROVIDERS = ['GRR','Buyagift','Virgin','Deposit'];
+  var PROVIDERS = ['GRR','Buyagift','Virgin','Deposit','Barclays'];
   var body = document.getElementById('resBody');
   if (!body) return;
   var pop = null;
@@ -2310,6 +2488,22 @@ addRow = function() {
     return out;
   }
   function field(tr, sel){ var el = tr.querySelector(sel); return el ? String(el.value || '').trim() : ''; }
+  // Who has each allergy: stored in the row's hidden .r-allergypos as JSON {"shellfish":["L","P2"]}
+  // (key = the allergy in lower case). Printed next to the allergy (L / G).
+  function readPos(tr){
+    var el = tr.querySelector('.r-allergypos'), v = el ? el.value : '';
+    try { var o = v ? JSON.parse(v) : {}; return (o && typeof o === 'object') ? o : {}; } catch (e){ return {}; }
+  }
+  function writePos(tr, map){
+    var el = tr.querySelector('.r-allergypos');
+    if (!el) return;
+    var clean = {};
+    Object.keys(map).forEach(function(k){ if (map[k] && map[k].length) clean[k] = map[k]; });
+    el.value = Object.keys(clean).length ? JSON.stringify(clean) : '';
+  }
+  function seatOptions(tr){
+    return ['L', 'G'];
+  }
   function tag(txt, cls){ return '<span class="tag' + (cls ? ' ' + cls : '') + '">' + h(txt) + '</span>'; }
 
   // ---- what the table shows ----
@@ -2319,7 +2513,11 @@ addRow = function() {
       var tk = splitTokens(ta.value), html = '';
       if (!tk.length) html = tag('+ Add', 'empty');
       else {
-        tk.slice(0, 2).forEach(function(t){ var k = kindOf(t); html += tag(t, k === 'a' ? 'al' : (k === 'd' ? '' : 'oth')); });
+        var pm = readPos(tr);
+        tk.slice(0, 2).forEach(function(t){
+          var k = kindOf(t), ps = pm[core(t)] || [];
+          html += '<span class="tag' + (k === 'a' ? ' al' : (k === 'd' ? '' : ' oth')) + '">' + h(t) + (ps.length ? ' <span class="pos">&middot; ' + h(ps.join(' ')) + '</span>' : '') + '</span>';
+        });
         if (tk.length > 2) html += tag('+' + (tk.length - 2), 'more');
       }
       ab.innerHTML = html;
@@ -2365,11 +2563,32 @@ addRow = function() {
     var el = document.createElement('div'); el.className = 'bk-pop';
     function has(label){ return tokens.some(function(t){ return core(t) === label.toLowerCase(); }); }
     function box(label){ return '<label class="bp-ck"><input type="checkbox" data-opt="' + h(label) + '"' + (has(label) ? ' checked' : '') + '><span>' + h(label) + '</span></label>'; }
-    function sync(){ ta.value = tokens.join(', '); fire(ta, 'input'); refreshRowTags(tr); }
+    var posMap = readPos(tr);
+    function renderPos(){
+      var box = el.querySelector('.bp-pos');
+      if (!box) return;
+      if (!tokens.length){ box.innerHTML = '<span class="bp-hint">Tick an allergy or diet first.</span>'; return; }
+      var opts = seatOptions(tr);
+      box.innerHTML = tokens.map(function(t){
+        var key = core(t), on = posMap[key] || [], all = opts.slice();
+        on.forEach(function(p){ if (all.indexOf(p) < 0) all.push(p); });   // keep a seat picked before the pax changed
+        return '<div class="bp-prow"><span class="bp-pname' + (kindOf(t) === 'a' ? ' al' : '') + '">' + h(t) + '</span><span class="bp-pchips">' +
+          all.map(function(p){ return '<button type="button" class="bp-pc' + (on.indexOf(p) >= 0 ? ' on' : '') + '" data-key="' + h(key) + '" data-pos="' + p + '">' + p + '</button>'; }).join('') +
+          '</span></div>';
+      }).join('');
+    }
+    function sync(){
+      var keep = {};
+      tokens.forEach(function(t){ var k = core(t); if (posMap[k]) keep[k] = posMap[k]; });
+      posMap = keep; writePos(tr, posMap);
+      ta.value = tokens.join(', '); fire(ta, 'input'); refreshRowTags(tr);
+      renderPos(); place();
+    }
     el.innerHTML = '<h4>Allergies / Requirements</h4><small>' + h(name || 'This booking') + ' &middot; filled from the CSV &mdash; you can change it</small>' +
       '<div class="bp-grp">Allergies</div><div class="bp-grid">' + ALLERGENS.map(box).join('') + '</div>' +
       '<div class="bp-grp">Diet</div><div class="bp-grid">' + DIETS.map(box).join('') + '</div>' +
       '<div class="bp-grp">Other</div><input type="text" class="bp-other" placeholder="Type anything else&hellip;" value="' + h(tokens.filter(function(t){ return !kindOf(t); }).join(', ')) + '">' +
+      '<div class="bp-grp">Who &middot; <span style="text-transform:none;letter-spacing:0;font-weight:400">L lady, G gentleman</span></div><div class="bp-pos"></div>' +
       '<div class="bp-act"><button type="button" class="bp-btn" data-act="clear">Clear</button><button type="button" class="bp-btn pr" data-act="done">Done</button></div>';
     el.addEventListener('change', function(e){
       var c = e.target;
@@ -2384,6 +2603,18 @@ addRow = function() {
       sync();
     });
     el.addEventListener('click', function(e){
+      var pc = e.target.closest ? e.target.closest('.bp-pc') : null;
+      if (pc){
+        var key = pc.getAttribute('data-key'), ps = pc.getAttribute('data-pos'), list = (posMap[key] || []).slice(), at = list.indexOf(ps);
+        if (at >= 0) list.splice(at, 1); else list.push(ps);
+        var order = seatOptions(tr);
+        list.sort(function(a, b){ var ia = order.indexOf(a), ib = order.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+        posMap[key] = list; writePos(tr, posMap);
+        fire(tr.querySelector('.r-allergypos'), 'input');
+        pc.classList.toggle('on', at < 0);
+        refreshRowTags(tr);
+        return;
+      }
       var b = e.target.closest ? e.target.closest('[data-act]') : null;
       if (!b) return;
       if (b.getAttribute('data-act') === 'done'){ closePop(); return; }
@@ -2393,6 +2624,7 @@ addRow = function() {
       sync();
     });
     showPop(btn, el);
+    renderPos(); place();
   }
 
   // ---- vouchers ----
