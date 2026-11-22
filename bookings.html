@@ -228,10 +228,11 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .pt-grid td.allergy-cell{white-space:normal}
 .pt-grid .p-sub{font-style:normal;color:#23210f}
 .pt-grid td.c-voucher{font-size:.92em}
+
 .pt-grid .p-who{display:inline-block;margin:0 1px;padding:0 3px;border:.6px solid #b03a2e;border-radius:2px;font-size:.85em;line-height:1.3}
 .pt-grid td.c-occwho{color:#23210f}
 /* printed pages made of Statement-size boxes (see renderBoxes) */
-.sheet-page{display:flex;justify-content:center;align-items:flex-start;break-after:page;page-break-after:always;overflow:hidden}
+.sheet-page{display:flex;justify-content:flex-start;align-items:flex-start;break-after:page;page-break-after:always;overflow:hidden;contain:strict;box-sizing:border-box}
 .sheet-page:last-child{break-after:auto;page-break-after:auto}
 .sheet-page.two-down{flex-direction:column;align-items:center}
 .bx{box-sizing:border-box;overflow:hidden;flex:0 0 auto}
@@ -546,6 +547,11 @@ tr.dragging{background:var(--soft)}
                         <div class="print-size-label">FOH <span>Sections &middot; Reception</span></div>
                         <button onclick="printFOH('statement');hidePrintMenu()">Statement</button>
                         <button onclick="printFOH('letter');hidePrintMenu()">Letter</button>
+                    </div>
+                    <div class="print-size-group">
+                        <div class="print-size-label">Reception <span>Portrait</span></div>
+                        <button onclick="printReception('statement');hidePrintMenu()">Statement</button>
+                        <button onclick="printReception('letter');hidePrintMenu()">Letter</button>
                     </div>
                     <div class="print-size-group">
                         <div class="print-size-label">BOH <span>Kitchen &middot; Pastry</span></div>
@@ -1407,7 +1413,7 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
     if (!voucherCode && voucher) { voucherCode = voucher; }
     if (!voucherProvider) voucherProvider = '';
     if (!voucherPin) voucherPin = '';
-    if (!allergyPos) allergyPos = '';
+    allergyPos = String(allergyPos || '').trim();
     if (!occasionPos) occasionPos = '';
     if (!voucherCode) voucherCode = '';
     if (!voucherValue) voucherValue = '';
@@ -1810,12 +1816,20 @@ function printSalon(section) {
 }
 
 // === PRINT RECEPTION ===
-function printReception() {
+function printReception(paper) {
     var info = getHeaderInfo();
     var rows = printRows();
-    setPrintOrientation(rows.length, 11);
-    document.getElementById('printPage1').innerHTML = buildReceptionHTML(info, rows);
-    document.getElementById('printArea').style.display = 'block';
+    showPrintArea('printAreaTriple');
+    // The sheet is laid out just wide enough for every column at its natural width (+ room for the notes)
+    // and then shrunk as a whole to the portrait width, so no column is ever squeezed or broken.
+    var W = SHEET_BOX.portrait.w - 2 * 4 * PX_MM - 2, pct = fitWidths(RECEPTION_KEYS, rows, info, 10000);   // inside the sheet's 4 mm side padding
+    var natural = 10000 * (1 - pct[RECEPTION_KEYS.indexOf('notes')] / 100);
+    var VW = Math.max(W, natural + 150), k = W / VW;
+    var build = function(part, first, last){
+        return '<div style="width:' + VW.toFixed(1) + 'px;zoom:' + k.toFixed(4) + '">' + buildReceptionHTML(info, part, first, last, VW) + '</div>';
+    };
+    var blocks = tagBlocks(sheetBlocks(build, rows, 'portrait', 0.85), 'r');
+    renderBoxes(packBoxes(blocks, 'portrait'), 'portrait', paper || 'statement');
     setTimeout(function(){ window.print(); }, 300);
 }
 
@@ -1832,12 +1846,12 @@ function printReceptionL() {
 // One printed table. keys = columns (see PCOL), widths in %. Three blank rows for walk-ins.
 var PCOL = {
     time:    { h: 'Time',      f: function(r, info){ return formatTimePrint(r.time, info.service); }, cls: 'c-time' },
-    pax:     { h: 'Pax',       f: function(r){ return esc(String(r.pax || '')); } },
+    pax:     { h: 'Pax',       f: function(r){ return esc(String(r.pax || '')); }, cls: 'c-pax' },
     star:    { h: '\u2605',    f: function(r){ return r.star ? '\u2605' : ''; }, cls: 'c-star' },
-    name:    { h: 'Name',      f: function(r){ return '<strong>' + (r.star ? '\u2605 ' : '') + esc(r.name) + '</strong>'; } },   // star only when marked
-    table:   { h: 'Tbl',       f: function(r){ return esc(r.table); } },
-    sec:     { h: 'Sec',       f: function(r){ return esc(printSec(r)); } },
-    menu:    { h: 'Menu',      f: function(r){ return esc(r.menu); } },
+    name:    { h: 'Name',      f: function(r){ return '<strong>' + (r.star ? '\u2605 ' : '') + esc(r.name) + '</strong>'; }, cls: 'c-name' },   // star only when marked
+    table:   { h: 'Tbl',       f: function(r){ return esc(r.table); }, cls: 'c-tblc' },
+    sec:     { h: 'Sec',       f: function(r){ return esc(printSec(r)); }, cls: 'c-sec' },
+    menu:    { h: 'Menu',      f: function(r){ return esc(r.menu); }, cls: 'c-menu' },
     allergy: { h: 'Allergies', f: function(r){ return allergyPrintHTML(r); }, td: function(r){ return r.allergy ? 'allergy-cell' : ''; } },
     occasion:{ h: 'Occasion',  f: function(r){ return esc(r.occasion || ''); }, td: function(r){ return r.occasion ? 'occasion-cell' : ''; } },
     occwho:  { h: '',          f: function(r){ return esc(r.occasionPos || ''); }, cls: 'c-occwho', td: function(r){ return r.occasion ? 'occasion-cell' : ''; } },     // who it is for (right of the occasion)
@@ -1892,8 +1906,48 @@ function menuSummaryHTML(rows) {
     Object.keys(menuCount).forEach(function(n){ if (menuCount[n] > 0) mp.push('<span>'+n+': '+menuCount[n]+'</span>'); });
     return mp.length ? '<div class="menu-summary">'+mp.join('')+'</div>' : '';
 }
+// Column widths (%) that fit the content: each short column is as wide as its longest entry
+// (or its title), measured with the print font; Notes take whatever is left (at least minNotes %).
+var _fitCtx = null;
+function textW(s, bold) {
+    if (!_fitCtx) _fitCtx = document.createElement('canvas').getContext('2d');
+    _fitCtx.font = (bold ? '600 ' : '400 ') + '8.7px Inter, "Segoe UI", sans-serif';     // 6.5pt print text
+    return _fitCtx.measureText(String(s || '')).width;
+}
+function headW(s) { return String(s || '').length * 5.4 + 4; }                            // 5pt capitals, letter-spaced
+function fitWidths(keys, rows, info, totalPx) {
+    var PAD = 11, CAP = { voucher: 110, occasion: 90, occwho: 80, menu: 70, name: 150 };
+    var px = keys.map(function(k) {
+        if (k === 'notes') return 0;
+        if (k === 'cloak') return headW('Cloak') + PAD;
+        var c = PCOL[k], w = (k === 'occwho') ? 0 : headW(c.h);
+        rows.forEach(function(r) {
+            var txt = String(c.f(r, info) || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, ' ');
+            txt.split('\n').forEach(function(line){ w = Math.max(w, textW(line, k === 'name' || k === 'voucher')); });
+        });
+        if (k === 'occasion') w = Math.max(w, headW('Occasion') - 30);
+        if (CAP[k]) w = Math.min(w, CAP[k]);
+        return Math.ceil(w + PAD);
+    });
+    var used = px.reduce(function(a, b){ return a + b; }, 0), ni = keys.indexOf('notes');
+    var minNotes = totalPx * 0.2;
+    if (ni >= 0) {
+        if (used > totalPx - minNotes) {                         // too wide: shrink only the flexible columns
+            var FLEX = { name: 1, menu: 1, occasion: 1, occwho: 1, voucher: 1 }, flex = 0;
+            keys.forEach(function(k, i){ if (FLEX[k]) flex += px[i]; });
+            var over = used - (totalPx - minNotes), k = flex > 0 ? Math.max(0.55, (flex - over) / flex) : 1;
+            px = px.map(function(w, i){ return FLEX[keys[i]] ? w * k : w; });
+            used = px.reduce(function(a, b){ return a + b; }, 0) - (px[ni] || 0);
+        }
+        px[ni] = totalPx - used;
+    } else if (used !== totalPx) {
+        px = px.map(function(w){ return w * totalPx / used; });
+    }
+    return px.map(function(w){ return Math.round(w / totalPx * 10000) / 100; });
+}
 function buildSheetHTML(label, info, rows, keys, widths, covers, tables, extraClass, blanks) {
     if (blanks == null) blanks = 3;
+    if (widths && widths.fit) widths = fitWidths(keys, rows, info, widths.fit);
     var cols = '<colgroup>' + widths.map(function(w){ return '<col style="width:' + w + '%">'; }).join('') + '</colgroup>';
     var head = '<thead><tr>' + keys.map(function(k, i){
         if (k === 'occwho' && keys[i - 1] === 'occasion') return '';
@@ -2063,7 +2117,9 @@ function renderBoxes(boxes, orient, paper) {
     setPageStyle(dims, '2mm');
     var html = '';
     for (var i = 0; i < boxes.length; i += per) {
-        html += '<div class="sheet-page ' + cls + '">' + boxes.slice(i, i + per).map(function(bx) {
+        // every printed page has a fixed, closed size: a shrunk (zoomed) sheet can never spill onto an extra blank page
+        var pw = cls === 'two-across' ? 2 * B.w : B.w, ph = cls === 'two-down' ? 2 * B.h : B.h;
+        html += '<div class="sheet-page ' + cls + '" style="width:' + pw.toFixed(1) + 'px;height:' + ph.toFixed(1) + 'px">' + boxes.slice(i, i + per).map(function(bx) {
             return '<div class="bx" style="width:' + B.w.toFixed(1) + 'px;height:' + B.h.toFixed(1) + 'px">' + bx.blocks.map(function(b) {
                 return '<div class="triple-cell bx-cell">' + (b.zoom < 1 ? '<div style="zoom:' + b.zoom.toFixed(3) + '">' + b.html + '</div>' : b.html) + '</div>';
             }).join('') + '</div>';
@@ -2330,10 +2386,16 @@ function buildKTStationHTML(info, ktRows) {
 
 // Reception: Time, Pax, ★, Name, Table, Sec, Menu, Occasion, Voucher, Visits, Notes
 // Reception: Time, Pax, ★, Name, Table, Sec, Menu, Occasion (+ who), Voucher, Visits, Notes
-function buildReceptionHTML(info, rows, first, last) {
+// Reception: Time, Pax, Cloak, Name, Table, Sec, Menu, Occasion (+ who), Voucher, Visits, Notes.
+// Columns fit their content (time, name, menu as wide as the longest entry) so the notes get the room.
+// Reception: Time, Pax, Cloak, Name, Table, Sec, Menu, Occasion (+ who), Voucher, Visits, Notes.
+// Short columns fit their content (time, name, menu… as wide as the longest entry); Notes get the rest.
+// widthPx = printable width of the sheet (landscape in FOH, portrait when printed on its own).
+var RECEPTION_KEYS = ['time','pax','cloak','name','table','sec','menu','occasion','occwho','voucher','visits','notes'];
+function buildReceptionHTML(info, rows, first, last, widthPx) {
     return buildSheetHTML('RECEPTION' + (first === false ? ' (cont.)' : ''), info, rows,
-        ['time','pax','cloak','name','table','sec','menu','occasion','occwho','voucher','visits','notes'],
-        [7, 4, 5, 15, 4, 4, 9, 9, 8, 13, 5, 17], info.covers, info.tables, 'reception-table', last === false ? 0 : 3);
+        RECEPTION_KEYS,
+        { fit: widthPx || SHEET_BOX.landscape.w }, info.covers, info.tables, 'reception-table', last === false ? 0 : 3);
 }
 
 // === SAVE / LOAD BOOKINGS (Firestore) ===
