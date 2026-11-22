@@ -98,7 +98,7 @@ body{font-family:var(--sans);background:var(--cream);color:#2c2c2c;line-height:1
 .res-table-edit .r-vcode{min-width:72px;width:72px;white-space:nowrap}
 .res-table-edit .r-notes{min-width:160px;width:160px}
 /* Selects keep a fixed comfortable width */
-.res-table-edit .r-occasion{min-width:90px;width:90px}
+.res-table-edit .r-occasion{min-width:110px;width:110px}
 .res-table-edit .r-menu{min-width:88px;width:88px}
 .res-table-edit .r-vprovider{min-width:72px;width:72px}
 .res-table-edit .r-allergypos{min-width:60px;width:60px}
@@ -402,7 +402,8 @@ tr.dragging{background:var(--soft)}
 
 /* --- Allergy and voucher tags (details open in small pop-ups) --- */
 .a-hidden,.v-hidden{display:none !important}
-.a-cell{min-width:190px}
+.a-cell{min-width:120px;max-width:170px}
+.a-cell .abtn{max-width:170px}
 .v-cell{min-width:250px}
 .abtn,.vbtn{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border:none;background:none;padding:2px;cursor:pointer;text-align:left;font:inherit;max-width:100%}
 .tag{display:inline-flex;align-items:center;gap:4px;border-radius:30px;padding:3px 10px;font-size:11px;font-weight:500;border:1px solid var(--gold-light);background:var(--soft);color:var(--green-dark);white-space:nowrap;line-height:1.35;transition:border-color .2s}
@@ -557,6 +558,7 @@ tr.dragging{background:var(--soft)}
                 </thead>
                 <tbody id="resBody"></tbody>
             </table>
+            <datalist id="occTypeList"><option value="Birthday"><option value="Anniversary"><option value="Engagement"><option value="Graduation"><option value="Retirement"><option value="Promotion"><option value="Honeymoon"><option value="Wedding"><option value="Proposal"><option value="Celebration"><option value="Congratulations"><option value="Farewell"><option value="Baby Shower"><option value="Hen Party"><option value="Stag Party"><option value="Welcome"><option value="Reunion"><option value="Special Occasion"></datalist>
         </div>
 
         <div class="actions">
@@ -1094,6 +1096,9 @@ function extractNotes(notes) {
         if (req) parts.push(req);
     }
     var raw = parts.join('; ');
+    // the visit count has its own column
+    raw = raw.replace(new RegExp('[^.;,]*\\d+\\s*(?:st|nd|rd|th)?\\s*' + VISIT_ONLY + '[^.;]*[.;]?', 'gi'), ' ')
+        .replace(new RegExp('(?:' + RESTO_WORD + '|' + GROUP_WORD + ')?\\s*' + VISIT_ONLY + '\\s*[:\\-=]\\s*\\d+(?:\\s*\\/\\s*\\d+)?[.;,]?', 'gi'), ' ').replace(/\s{2,}/g, ' ').trim();
 
     // Clean out anything already captured in other columns
     var hasVoucher = !!(extractVoucherCode(notes) || extractVoucherValue(notes));
@@ -1139,11 +1144,43 @@ function cleanNotes(text, hasVoucher, hasAllergy, hasOccasion) {
     return kept.join('. ').replace(/\.\s*\./g, '.').trim();
 }
 
-// Number of visits from the CSV, when the export has a column for it (VISITS / VISIT COUNT).
+// Visits as "restaurant/group", e.g. "3/8" = 3rd visit to the restaurant, 8th in the group.
+// Read from a VISITS column when the export has one, otherwise from the notes
+// ("3rd visit to the restaurant, 8th in the group", "Restaurant visits: 3 / Group visits: 8", "3/8 visits"…).
+function normVisits(v) {
+    var m = String(v == null ? '' : v).match(/(\d+)\s*(?:\/\s*(\d+))?/);
+    return m ? m[1] + (m[2] ? '/' + m[2] : '') : '';
+}
+var VISIT_WORD = '(?:visits?|visitas?|visita|times?|vez|veces)';
+var VISIT_ONLY = '(?:visits?|visitas?|visita)';
+var RESTO_WORD = '(?:restaurante|restaurant|petrus|venue|site|here)';
+var GROUP_WORD = '(?:group|grupo|gordon\\s+ramsay|grr|gr\\s+restaurants?)';
+function parseVisits(text) {
+    var s = String(text || '').replace(/\s+/g, ' ');
+    if (!s) return '';
+    var m = s.match(new RegExp(VISIT_WORD + '\\s*[:\\-]?\\s*(\\d+)\\s*\\/\\s*(\\d+)', 'i')) ||
+            s.match(new RegExp('(\\d+)\\s*\\/\\s*(\\d+)\\s*' + VISIT_WORD, 'i'));
+    if (m) return m[1] + '/' + m[2];
+    var ord = '(\\d+)\\s*(?:st|nd|rd|th|ra|ro|da|do|ta|to|a|o|\\u00aa|\\u00ba)?\\.?';
+    var on = '\\s*(?:to|at|in|with|across|en|al|a|de|del)?\\s*(?:the|el|la|our)?\\s*';
+    function find(word) {
+        var b = s.match(new RegExp(word + '\\s*' + VISIT_WORD + '?\\s*[:\\-=]\\s*(\\d+)', 'i'));    // "Group visits: 8"
+        if (b) return b[1];
+        var a = s.match(new RegExp(ord + '\\s*(?:' + VISIT_WORD + ')?' + on + word + '\\b', 'i'));  // "8th in the group"
+        return a ? a[1] : '';
+    }
+    var r = find(RESTO_WORD), g = find(GROUP_WORD);
+    if (!r) {                                            // "3rd visit" with no place = the restaurant
+        var c = s.match(new RegExp(ord + '\\s*' + VISIT_ONLY + '\\b', 'i'));
+        if (c && c[1] !== g) r = c[1];
+    }
+    if (!r && !g) return '';
+    return (r || '?') + (g ? '/' + g : '');
+}
 function csvVisits(row) {
-    var v = row['VISITS'] || row['VISIT COUNT'] || row['VISITS COUNT'] || row['NO. OF VISITS'] || '';
-    v = String(v).replace(/[^0-9]/g, '');
-    return v;
+    var col = row['VISITS'] || row['VISIT COUNT'] || row['VISITS COUNT'] || row['NO. OF VISITS'] || row['VISIT'] || '';
+    if (String(col).trim()) return normVisits(col);
+    return parseVisits(row['NOTES AND TAGS'] || '');
 }
 
 // === POPULATE ===
@@ -1301,25 +1338,7 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
         '<textarea class="r-allergy a-hidden" rows="2">'+esc(allergy)+'</textarea>' +
         '<input type="hidden" class="r-allergypos" value="'+esc(allergyPos||'')+'"></td>' +
         '<td><input type="text" value="'+esc(occasionPos||'')+'" class="r-occpos"></td>' +
-        '<td><select class="r-occasion">'+
-            '<option value=""'+(!occasion?' selected':'')+'>—</option>'+
-            '<option value="Birthday"'+((occasion||'')==='Birthday'?' selected':'')+'>Birthday</option>'+
-            '<option value="Anniversary"'+((occasion||'')==='Anniversary'?' selected':'')+'>Anniversary</option>'+
-            '<option value="Engagement"'+((occasion||'')==='Engagement'?' selected':'')+'>Engagement</option>'+
-            '<option value="Graduation"'+((occasion||'')==='Graduation'?' selected':'')+'>Graduation</option>'+
-            '<option value="Retirement"'+((occasion||'')==='Retirement'?' selected':'')+'>Retirement</option>'+
-            '<option value="Honeymoon"'+((occasion||'')==='Honeymoon'?' selected':'')+'>Honeymoon</option>'+
-            '<option value="Wedding"'+((occasion||'')==='Wedding'?' selected':'')+'>Wedding</option>'+
-            '<option value="Proposal"'+((occasion||'')==='Proposal'?' selected':'')+'>Proposal</option>'+
-            '<option value="Celebration"'+((occasion||'')==='Celebration'?' selected':'')+'>Celebration</option>'+
-            '<option value="Congratulations"'+((occasion||'')==='Congratulations'?' selected':'')+'>Congratulations</option>'+
-            '<option value="Farewell"'+((occasion||'')==='Farewell'?' selected':'')+'>Farewell</option>'+
-            '<option value="Baby Shower"'+((occasion||'')==='Baby Shower'?' selected':'')+'>Baby Shower</option>'+
-            '<option value="Hen Party"'+((occasion||'')==='Hen Party'?' selected':'')+'>Hen Party</option>'+
-            '<option value="Stag Party"'+((occasion||'')==='Stag Party'?' selected':'')+'>Stag Party</option>'+
-            '<option value="Welcome"'+((occasion||'')==='Welcome'?' selected':'')+'>Welcome</option>'+
-            '<option value="Reunion"'+((occasion||'')==='Reunion'?' selected':'')+'>Reunion</option>'+
-        '</select></td>' +
+        '<td><input type="text" class="r-occasion" list="occTypeList" value="'+esc(occasion||'')+'" placeholder="\u2014" title="Pick from the list or type another occasion"></td>' +
         '<td class="v-cell"><button type="button" class="vbtn" title="Voucher"></button><div class="v-hidden">' +
         '<select class="r-vprovider">'+
 
@@ -1335,7 +1354,7 @@ function addRow(time, pax, name, table, menu, occasion, allergy, notes, voucher,
         '<input type="text" value="'+esc(voucherPin||'')+'" class="r-vpin">' +
         '<input type="text" value="'+esc(voucherValue||'')+'" class="r-vvalue" placeholder="£">' +
         '</div></td>' +
-        '<td><input type="number" value="'+esc(String(visits==null?'':visits))+'" class="r-visits" min="0" title="Number of visits"></td>' +
+        '<td><input type="text" value="'+esc(normVisits(visits))+'" class="r-visits" inputmode="numeric" placeholder="R/G" title="Visits: restaurant / group (e.g. 3/8)"></td>' +
         '<td><input type="text" value="'+esc(notes||'')+'" class="r-notes"></td>' +
         '<td><button class="btn-remove-row" onclick="this.closest(\'tr\').remove();recalc();">&#215;</button></td>';
     tbody.appendChild(tr);
@@ -1714,7 +1733,11 @@ var PCOL = {
                    if (amt) out.push(esc(amt));
                    return out.join(' ');
                }, cls: 'c-voucher' },
-    visits:  { h: 'Visits',    f: function(r){ return esc(String(r.visits || '')); } },
+    visits:  { h: 'Visits',    f: function(r){
+                   var v = normVisits(r.visits); if (!v) return '';
+                   var p = v.split('/');
+                   return '<b>' + esc(p[0]) + '</b>' + (p[1] ? '/' + esc(p[1]) : '');
+               }, cls: 'c-visits' },
     notes:   { h: 'Notes',     f: function(r){ return esc(r.notes); }, cls: 'notes-cell' },
     allergyPlain: { h: 'Allergies', f: function(r){ return allergyPrintHTML({ allergy: r.allergy }); }, td: function(r){ return r.allergy ? 'allergy-cell' : ''; } },
     cloak:   { h: 'Cloak',     f: function(){ return ''; }, cls: 'c-cloak' }      // written by hand at reception
@@ -1775,14 +1798,14 @@ function buildSheetHTML(label, info, rows, keys, widths, covers, tables, extraCl
 // Kitchen: Time, Pax, ★, Name, Table, Menu, Allergies
 function buildKitchenHTML(info, rows, first, last) {
     return buildSheetHTML('KITCHEN' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','star','name','table','menu','allergyPlain'],
-        [10, 6, 4, 28, 7, 15, 30], info.covers, info.tables, '', last === false ? 0 : 3);
+        [10, 6, 4, 32, 7, 17, 24], info.covers, info.tables, '', last === false ? 0 : 3);
 }
 
 // Pastry: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion
 // Pastry: Time, Pax, ★, Name, Table, Menu, Allergies, Occasion (+ who it is for)
 function buildPastryHTML(info, rows, first, last) {
     return buildSheetHTML('PASTRY' + (first === false ? ' (cont.)' : ''), info, rows, ['time','pax','star','name','table','menu','allergyPlain','occasion'],
-        [9, 5, 4, 22, 6, 13, 23, 18], info.covers, info.tables, '', last === false ? 0 : 3);
+        [9, 5, 4, 26, 6, 13, 19, 18], info.covers, info.tables, '', last === false ? 0 : 3);
 }
 
 function buildReceptionLHTML(info, rows) {
@@ -1814,7 +1837,7 @@ function buildSalonHTML(info, filtered, sectionLabel, allowedTables, first, last
     all.forEach(function(r){ sectionCovers += parseInt(r.pax) || 0; });
     return buildSheetHTML(sectionLabel + (first === false ? ' (cont.)' : ''), info, filtered,
         ['time','pax','star','name','table','menu','allergy','occasion','occwho','voucher','visits','notes'],
-        [7, 4, 3, 13, 4, 9, 14, 9, 8, 12, 4, 13], sectionCovers, all.length, '', last === false ? 0 : 3);
+        [7, 4, 3, 14, 4, 9, 11, 9, 8, 12, 5, 14], sectionCovers, all.length, '', last === false ? 0 : 3);
 }
 
 // === PRINT BOH (Kitchen x2 + Pastry) ===
@@ -2400,6 +2423,7 @@ document.getElementById('resBody').addEventListener('input', function(e) {
 // Strip any leading £/€ the user types in the money field — the column is
 // already labelled £, and this prevents a stored "£118" from doubling up.
 document.getElementById('resBody').addEventListener('blur', function(e) {
+    if (e.target && e.target.matches('.r-visits')) { e.target.value = normVisits(e.target.value); }
     if (e.target && e.target.matches('.r-vvalue')) {
         e.target.value = e.target.value.replace(/^[£€\s]+/, '').trim();
     }
