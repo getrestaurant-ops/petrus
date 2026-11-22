@@ -376,6 +376,9 @@ body{background:#fff;color:var(--ink)}
 .tile:hover,.tile:focus-visible{border-color:var(--gold);box-shadow:0 8px 20px rgba(94,88,41,.16);transform:translateY(-1px);outline:none}
 .stepper{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:11px;font-weight:500;color:var(--green-dark);letter-spacing:.3px}
 .stepper-ctl{display:flex;align-items:center;gap:4px}
+.sz-step{margin:0 0 10px}
+.sz-val{min-width:44px;text-align:center;font-size:13px;font-weight:600;color:var(--ink);cursor:default;font-variant-numeric:tabular-nums}
+.mini-sep{width:1px;height:16px;background:var(--border);margin:0 2px}
 .step-b{width:28px;height:28px;border-radius:50%;border:1px solid var(--gold-light);background:#fff;color:var(--green-dark);cursor:pointer;font-size:16px;line-height:1;padding:0}
 .step-b:hover{border-color:var(--gold);background:var(--soft)}
 .stepper .seat-input{width:44px;border:none;background:transparent;font-size:15px;font-weight:600;padding:4px 0;-moz-appearance:textfield}
@@ -530,6 +533,14 @@ body.ev-plan #eventList,body.ev-plan #btnNewEvent{display:none}
       <section class="tcard idle" id="selCard">
         <h3 class="tlabel">Selected</h3>
         <button type="button" class="btn primary gbtn" onclick="openFocus()">Guests</button>
+        <div class="stepper sz-step">
+          <span>Size</span>
+          <span class="stepper-ctl">
+            <button type="button" class="step-b" onclick="stepSize(-1)" aria-label="Smaller table" title="Smaller table">&minus;</button>
+            <span class="sz-val" id="sizeVal" title="Double-click to go back to the automatic size" ondblclick="stepSize(0)">&ndash;</span>
+            <button type="button" class="step-b" onclick="stepSize(1)" aria-label="Bigger table" title="Bigger table">+</button>
+          </span>
+        </div>
         <div class="tgrid">
           <button class="btn" onclick="duplicateSelected()">Duplicate</button>
           <button class="btn" onclick="resetSeats()">Reset seats</button>
@@ -670,6 +681,7 @@ function planSignature(p){
     while (diets.length && !diets[diets.length - 1]) diets.pop();
     var row = [u.id, u.shape, u.seats, u.label, Math.round(u.x), Math.round(u.y), angles, guests];
     if (diets.length) row.push(diets);     // only present when used, so plans saved earlier still compare equal
+    if (u.size && u.size !== 1) row.push('s' + u.size);
     return row;
   });
   var fixed = (p.fixed || []).map(function(f){
@@ -829,14 +841,43 @@ function updateEventCount(){
   }
 }
 
-function tableDiameter(seats, shape){
-  if (shape === 'rect') return { w: Math.max(120, seats*26), h: 70 };
-  var d = Math.max(70, 44 + seats * 7);
+// Table size: from the number of seats, times the table's own size (u.size, set with Size − / +).
+var SIZE_MIN = 0.5, SIZE_MAX = 2.5, SIZE_STEP = 0.1;
+function tableSize(u){ var s = parseFloat(u && u.size); return (s > 0) ? Math.min(SIZE_MAX, Math.max(SIZE_MIN, s)) : 1; }
+function tableDiameter(seats, shape, size){
+  var k = size > 0 ? size : 1;
+  if (shape === 'rect') return { w: Math.round(Math.max(120, seats*26) * k), h: Math.round(70 * Math.min(k, 1.6)) };
+  var d = Math.round(Math.max(70, 44 + seats * 7) * k);
   return { w: d, h: d };
+}
+// Make the selected table bigger (+1) or smaller (−1), or back to automatic (0).
+function stepSize(d, u){
+  u = u || findSelected();
+  if (!u || state.units.indexOf(u) < 0) return;
+  var s = d === 0 ? 1 : Math.round((tableSize(u) + d * SIZE_STEP) * 10) / 10;
+  s = Math.min(SIZE_MAX, Math.max(SIZE_MIN, s));
+  if (s === 1) delete u.size; else u.size = s;
+  // keep the table centred where it was
+  var old = canvas.querySelector('[data-id="' + u.id + '"]'), ow = old ? old.offsetWidth : 0, oh = old ? old.offsetHeight : 0;
+  rerenderUnit(u);
+  var node = canvas.querySelector('[data-id="' + u.id + '"]');
+  if (node && ow){
+    u.x = Math.max(0, Math.round(u.x - (node.offsetWidth - ow) / 2));
+    u.y = Math.max(0, Math.round(u.y - (node.offsetHeight - oh) / 2));
+    node.style.left = u.x + 'px'; node.style.top = u.y + 'px';
+  }
+  state.selectedId = u.id;
+  if (node) node.classList.add('selected');
+  updateSizeUi();
+  save();
+}
+function updateSizeUi(){
+  var el = document.getElementById('sizeVal'), u = findSelected();
+  if (el) el.textContent = (u && state.units.indexOf(u) >= 0) ? Math.round(tableSize(u) * 100) + '%' : '\u2013';
 }
 
 function renderUnit(u){
-  var dim = tableDiameter(u.seats, u.shape);
+  var dim = tableDiameter(u.seats, u.shape, tableSize(u));
   var chairD = 22, pad = chairD + 14;
   var ringW = dim.w + pad*2, ringH = dim.h + pad*2;
 
@@ -892,6 +933,10 @@ function renderUnit(u){
     '<button class="mini" data-act="minus">&minus;</button>' +
     '<span class="mini-count">'+u.seats+' seats</span>' +
     '<button class="mini" data-act="plus">+</button>' +
+    '<span class="mini-sep"></span>' +
+    '<button class="mini" data-act="smaller" title="Smaller table">&#8722;</button>' +
+    '<span class="mini-count">Size</span>' +
+    '<button class="mini" data-act="bigger" title="Bigger table">+</button>' +
     '<button class="mini x" data-act="del">&times;</button>';
   ctrl.addEventListener('mousedown', function(e){ e.stopPropagation(); });
   ctrl.addEventListener('click', function(e){
@@ -904,6 +949,8 @@ function renderUnit(u){
       state.selectedId=null; updateTotals(); renderGuestPanel(); save();
       return;
     }
+    if (act==='bigger'){ stepSize(1, u); return; }
+    if (act==='smaller'){ stepSize(-1, u); return; }
     if (act==='plus') u.seats = Math.min(30, u.seats+1);
     if (act==='minus') u.seats = Math.max(1, u.seats-1);
     rerenderUnit(u);   // rebuild only this table, keep it selected
@@ -1250,6 +1297,7 @@ function updateToolState(){
   var has = !!state.selectedId;
   card.classList.toggle('idle', !has);
   card.querySelectorAll('button').forEach(function(b){ b.disabled = !has; });
+  updateSizeUi();
 }
 
 // ── Focus view: zoom into the selected table; its guest list slides in from the right ──
