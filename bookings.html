@@ -242,8 +242,9 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .bx .station-page{page-break-after:auto;break-after:auto;padding:0;margin:0}
 /* station sheets: Section 1 | Section 2 side by side on one landscape Statement page (cut down the middle) */
 /* station page: portrait Statement (named page), two halves = Section 1 / Section 2 */
-.st-page{page:stations;break-before:page;page-break-before:always;margin:0}
-.st-page.on-letter{page:auto}
+.st-page{margin:0}
+.st-page.on-letter .st-grid td{height:40px}
+.st-page.on-letter .st-title{font-size:16pt}
 .st-half2{box-sizing:border-box;overflow:hidden;padding:6px 2px 0}
 .st-half2 + .st-half2{border-top:.6px dashed #aaa}
 .st-grid th.st-wh{text-align:center;border-bottom:.5px solid #b8b49a}
@@ -542,14 +543,19 @@ tr.dragging{background:var(--soft)}
                 <button class="print-main-btn" id="printMainBtn" onclick="togglePrintMenu()">Print ▾</button>
                 <div class="print-options" id="printOptions">
                     <div class="print-size-group">
-                        <div class="print-size-label">Statement <span>5.5×8.5"</span></div>
-                        <button onclick="printBOH('statement');hidePrintMenu()">BOH</button>
-                        <button onclick="printFOH('statement');hidePrintMenu()">FOH</button>
+                        <div class="print-size-label">FOH <span>Sections &middot; Reception</span></div>
+                        <button onclick="printFOH('statement');hidePrintMenu()">Statement</button>
+                        <button onclick="printFOH('letter');hidePrintMenu()">Letter</button>
                     </div>
                     <div class="print-size-group">
-                        <div class="print-size-label">Letter <span>2 Statement sheets per page &middot; cut in half</span></div>
-                        <button onclick="printBOH('letter');hidePrintMenu()">BOH</button>
-                        <button onclick="printFOH('letter');hidePrintMenu()">FOH</button>
+                        <div class="print-size-label">BOH <span>Kitchen &middot; Pastry</span></div>
+                        <button onclick="printBOH('statement');hidePrintMenu()">Statement</button>
+                        <button onclick="printBOH('letter');hidePrintMenu()">Letter</button>
+                    </div>
+                    <div class="print-size-group">
+                        <div class="print-size-label">Water <span>Water &middot; aperitif &middot; canap&eacute;s &middot; wine</span></div>
+                        <button onclick="printWater('statement');hidePrintMenu()">Statement</button>
+                        <button onclick="printWater('letter');hidePrintMenu()">Letter</button>
                     </div>
                 </div>
             </div>
@@ -1728,8 +1734,7 @@ function setPageStyle(dims, margin) {
     if (existing) existing.remove();
     var style = document.createElement('style');
     style.id = 'printOrientationStyle';
-    style.textContent = '@page{size:' + dims + ';margin:' + (margin || '2mm') + '}' +
-        '@page stations{size:5.5in 8.5in;margin:2mm}';     // station sheets: portrait Statement, Section 1 on top, Section 2 below
+    style.textContent = '@page{size:' + dims + ';margin:' + (margin || '2mm') + '}';
     document.head.appendChild(style);
 }
 
@@ -1977,8 +1982,6 @@ function printFOH(paper) {
     if (s2Rows.length > 0) blocks = blocks.concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildSalonHTML(info, part, 'SECTION 2', SECTION_2_TABLES, first, last, s2Rows); }, s2Rows, 'landscape', 0.88), 's'));
     blocks = blocks.concat(tagBlocks(sheetBlocks(function(part, first, last){ return buildReceptionHTML(info, part, first, last); }, rows, 'landscape', 0.7), 'r'));
     renderBoxes(packBoxes(blocks, 'landscape'), 'landscape', paper);
-    var st = buildAllStationPages(info, rows, paper);
-    if (st) document.querySelector('#printAreaTriple .print-triple-page').insertAdjacentHTML('beforeend', st);
     setTimeout(function(){ window.print(); }, 300);
 }
 
@@ -2161,16 +2164,27 @@ var STATION_WATER = 'cols';          // 'seats' = a circle per guest (P1, P2…)
 function buildAllStationPages(info, rows, paper) {
     var s1 = filterBySection(rows, 1), s2 = filterBySection(rows, 2);
     if (!s1.length && !s2.length) return '';
-    var W = 5.5 * 96 - 4 * 3.7795, H = (8.5 * 96 - 4 * 3.7795) / 2;
+    var letter = paper === 'letter' || paper === 'a4';
+    var W = (letter ? 8.5 : 5.5) * 96 - 4 * 3.7795, H = ((letter ? 11 : 8.5) * 96 - 4 * 3.7795) / 2 - 2;
     function half(html) {
         if (!html) return '<div class="st-half2" style="height:' + H.toFixed(1) + 'px"></div>';
-        var h = measureSheet(html, W), z = h > H - 4 ? (H - 4) / h : 1;
+        var h = measureSheet(letter ? '<div class="st-page on-letter">' + html + '</div>' : html, W), z = h > H - 6 ? (H - 6) / h : 1;   // measured with the Letter row height
         return '<div class="st-half2" style="height:' + H.toFixed(1) + 'px"><div style="zoom:' + z.toFixed(3) + '">' + html + '</div></div>';
     }
-    var letter = paper === 'letter' || paper === 'a4';
     return '<div class="st-page' + (letter ? ' on-letter' : '') + '" style="width:' + W.toFixed(1) + 'px">' +
         half(s1.length ? buildStationHTML(info, s1, 'SECTION 1') : '') +
         half(s2.length ? buildStationHTML(info, s2, 'SECTION 2') : '') + '</div>';
+}
+// Print the water / aperitif / canapes / wine sheet on its own, in portrait.
+function printWater(paper) {
+    var info = getHeaderInfo(), rows = printRows();
+    var letter = paper === 'letter' || paper === 'a4';
+    var html = buildAllStationPages(info, rows, paper);
+    if (!html) { alert('No bookings in Section 1 or Section 2 to print.'); return; }
+    setPageStyle(letter ? '8.5in 11in' : '5.5in 8.5in', '2mm');
+    showPrintArea('printAreaTriple');
+    document.querySelector('#printAreaTriple .print-triple-page').innerHTML = html;
+    setTimeout(function(){ window.print(); }, 300);
 }
 
 // Shared row builders for a station grid given a set of columns.
