@@ -243,9 +243,8 @@ tr.drag-over td{border-top:2px solid var(--gold)}
 .bx .station-page{page-break-after:auto;break-after:auto;padding:0;margin:0}
 /* station sheets: Section 1 | Section 2 side by side on one landscape Statement page (cut down the middle) */
 /* station page: portrait Statement (named page), two halves = Section 1 / Section 2 */
-.st-page{margin:0}
-.st-page.on-letter .st-grid td{height:40px}
-.st-page.on-letter .st-title{font-size:16pt}
+.st-page{margin:0;overflow:hidden}
+.st-page.on-letter{border-right:.6px dashed #aaa}
 .st-half2{box-sizing:border-box;overflow:hidden;padding:6px 2px 0}
 .st-half2 + .st-half2{border-top:.6px dashed #aaa}
 .st-grid th.st-wh{text-align:center;border-bottom:.5px solid #b8b49a}
@@ -2221,13 +2220,13 @@ function buildAllStationPages(info, rows, paper) {
     var s1 = filterBySection(rows, 1), s2 = filterBySection(rows, 2);
     if (!s1.length && !s2.length) return '';
     var letter = paper === 'letter' || paper === 'a4';
-    var W = (letter ? 8.5 : 5.5) * 96 - 4 * 3.7795, H = ((letter ? 11 : 8.5) * 96 - 4 * 3.7795) / 2 - 2;
+    var W = 5.5 * 96 - 4 * 3.7795, H = (8.5 * 96 - 4 * 3.7795) / 2 - 2;     // always Statement size, also on Letter paper
     function half(html) {
         if (!html) return '<div class="st-half2" style="height:' + H.toFixed(1) + 'px"></div>';
-        var h = measureSheet(letter ? '<div class="st-page on-letter">' + html + '</div>' : html, W), z = h > H - 6 ? (H - 6) / h : 1;   // measured with the Letter row height
+        var h = measureSheet(html, W), z = h > H - 6 ? (H - 6) / h : 1;
         return '<div class="st-half2" style="height:' + H.toFixed(1) + 'px"><div style="zoom:' + z.toFixed(3) + '">' + html + '</div></div>';
     }
-    return '<div class="st-page' + (letter ? ' on-letter' : '') + '" style="width:' + W.toFixed(1) + 'px">' +
+    return '<div class="st-page' + (letter ? ' on-letter' : '') + '" style="width:' + W.toFixed(1) + 'px;height:' + (2 * H).toFixed(1) + 'px">' +
         half(s1.length ? buildStationHTML(info, s1, 'SECTION 1') : '') +
         half(s2.length ? buildStationHTML(info, s2, 'SECTION 2') : '') + '</div>';
 }
@@ -2237,7 +2236,7 @@ function printWater(paper) {
     var letter = paper === 'letter' || paper === 'a4';
     var html = buildAllStationPages(info, rows, paper);
     if (!html) { alert('No bookings in Section 1 or Section 2 to print.'); return; }
-    setPageStyle(letter ? '8.5in 11in' : '5.5in 8.5in', '2mm');
+    setPageStyle(letter ? '11in 8.5in' : '5.5in 8.5in', '2mm');
     showPrintArea('printAreaTriple');
     document.querySelector('#printAreaTriple .print-triple-page').innerHTML = html;
     setTimeout(function(){ window.print(); }, 300);
