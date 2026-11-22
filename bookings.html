@@ -454,6 +454,8 @@ tr.dragging{background:var(--soft)}
 .bp-pos{display:flex;flex-direction:column;gap:6px}
 .bp-prow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .bp-pname{font-size:12px;color:var(--ink);min-width:86px}
+.bp-qty{width:44px;padding:4px 6px;border:1px solid var(--border);border-radius:8px;font:12px var(--sans);text-align:center;color:var(--ink);background:#fff}
+.bp-qty:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(177,170,108,.22)}
 .bp-pname.al{color:#a8362b;font-weight:600}
 .bp-pchips{display:flex;flex-wrap:wrap;gap:4px}
 .bp-pc{min-width:30px;padding:3px 7px;border-radius:20px;border:1px solid var(--gold-light);background:#fff;color:var(--green-dark);font:500 11px var(--sans);cursor:pointer}
@@ -739,10 +741,10 @@ function extractAllergies(notes) {
     });
 
     // Capture "Nx [allergy]" patterns like "1x shellfish and peanuts allergy"
-    var nxPattern = notes.match(/(\d+)\s*x\s+([\w\s]+?)(?:\s+allergy|\s+intolerance)?(?:\/|,|;|\.|$)/gi);
+    var nxPattern = notes.match(/(\d+)\s*x\s+([\w\s]+?)(?:\s+allergy|\s+intolerance)?(?:\/|,|;|\.|\s*\(|$)/gi);
     if (nxPattern) {
         nxPattern.forEach(function(m) {
-            var parts = m.match(/(\d+)\s*x\s+([\w\s]+?)(?:\s+allergy|\s+intolerance)?(?:\/|,|;|\.|$)/i);
+            var parts = m.match(/(\d+)\s*x\s+([\w\s]+?)(?:\s+allergy|\s+intolerance)?(?:\/|,|;|\.|\s*\(|$)/i);
             if (parts && parts[2]) {
                 var items = parts[2].trim().split(/\s+and\s+|\s*&\s*/i);
                 items.forEach(function(item) {
@@ -855,6 +857,19 @@ function extractAllergies(notes) {
             return false;
         });
     });
+
+    // A label found without a quantity takes the one written in the notes ("1x gluten" → "1x Gluten Free").
+    deduped = deduped.map(function(v){
+        if (/^\d+\s*x\s/i.test(v)) return v;
+        var low = v.toLowerCase(), word = /^no\s/.test(low) ? low : low.split(/\s+/)[0];
+        var esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+        var q = notes.match(new RegExp('(\\d+)\\s*x\\s*' + esc + '\\b', 'i'));
+        return q ? q[1] + 'x ' + v : v;
+    });
+    // and "1x No beef" / "1x no beef" read the same as the standard label
+    deduped = deduped.map(function(v){
+        return v.replace(/^(\d+)\s*x\s+(.*)$/i, function(m, n, rest){ return n + 'x ' + rest.replace(/\b\w/g, function(c){ return c.toUpperCase(); }); });
+    }).filter(function(v,i,a){ return a.findIndex(function(x){ return x.toLowerCase() === v.toLowerCase(); }) === i; });
 
     return deduped.join(', ');
 }
@@ -2596,7 +2611,9 @@ addRow = function() {
       box.innerHTML = tokens.map(function(t){
         var key = core(t), on = posMap[key] || [], all = opts.slice();
         on.forEach(function(p){ if (all.indexOf(p) < 0) all.push(p); });   // keep a seat picked before the pax changed
-        return '<div class="bp-prow"><span class="bp-pname' + (kindOf(t) === 'a' ? ' al' : '') + '">' + h(t) + '</span><span class="bp-pchips">' +
+        var qm = String(t).match(/^(\d+)\s*x\s+/i), qty = qm ? qm[1] : '', label = String(t).replace(/^\d+\s*x\s+/i, '');
+        return '<div class="bp-prow"><input type="number" class="bp-qty" min="1" max="99" inputmode="numeric" placeholder="#" title="How many guests" value="' + qty + '" data-key="' + h(key) + '">' +
+          '<span class="bp-pname' + (kindOf(t) === 'a' ? ' al' : '') + '">' + h(label) + '</span><span class="bp-pchips">' +
           all.map(function(p){ return '<button type="button" class="bp-pc' + (on.indexOf(p) >= 0 ? ' on' : '') + '" data-key="' + h(key) + '" data-pos="' + p + '">' + p + '</button>'; }).join('') +
           '</span></div>';
       }).join('');
@@ -2612,7 +2629,7 @@ addRow = function() {
       '<div class="bp-grp">Allergies</div><div class="bp-grid">' + ALLERGENS.map(box).join('') + '</div>' +
       '<div class="bp-grp">Diet</div><div class="bp-grid">' + DIETS.map(box).join('') + '</div>' +
       '<div class="bp-grp">Other</div><input type="text" class="bp-other" placeholder="Type anything else&hellip;" value="' + h(tokens.filter(function(t){ return !kindOf(t); }).join(', ')) + '">' +
-      '<div class="bp-grp">Who &middot; <span style="text-transform:none;letter-spacing:0;font-weight:400">L lady, G gentleman</span></div><div class="bp-pos"></div>' +
+      '<div class="bp-grp">How many &middot; who <span style="text-transform:none;letter-spacing:0;font-weight:400">(L lady, G gentleman)</span></div><div class="bp-pos"></div>' +
       '<div class="bp-act"><button type="button" class="bp-btn" data-act="clear">Clear</button><button type="button" class="bp-btn pr" data-act="done">Done</button></div>';
     el.addEventListener('change', function(e){
       var c = e.target;
@@ -2621,6 +2638,18 @@ addRow = function() {
       tokens = tokens.filter(function(t){ return core(t) !== lab; });
       if (c.checked) tokens.push(c.getAttribute('data-opt'));
       sync();
+    });
+    // quantity: stored in the allergy itself ("1x Gluten Free"), as the CSV writes it
+    el.addEventListener('input', function(e){
+      var q = e.target;
+      if (!q.classList || !q.classList.contains('bp-qty')) return;
+      var key = q.getAttribute('data-key'), n = parseInt(q.value, 10);
+      tokens = tokens.map(function(tk){
+        if (core(tk) !== key) return tk;
+        var bare = String(tk).replace(/^\d+\s*x\s+/i, '');
+        return (n > 0 ? Math.min(n, 99) + 'x ' : '') + bare;
+      });
+      ta.value = tokens.join(', '); fire(ta, 'input'); refreshRowTags(tr);
     });
     el.querySelector('.bp-other').addEventListener('input', function(){
       tokens = tokens.filter(function(t){ return kindOf(t); }).concat(splitTokens(this.value));
